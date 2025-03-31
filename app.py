@@ -77,4 +77,4 @@ if uploaded_file:
             file_name="extracted_items.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
+Add Streamlit app and requirements
