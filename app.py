@@ -89,7 +89,7 @@ st.markdown('<div class="upload-title">UPLOAD SOR PDF FILE</div>', unsafe_allow_
 
 # Upload
 uploaded_file = st.file_uploader("Upload PDF", type=["pdf"], label_visibility="collapsed")
-st.markdown('<div class="custom-upload">Drag your PDF file here or click to browse</div>', unsafe_allow_html=True)
+# st.markdown('<div class="custom-upload">Drag your PDF file here or click to browse</div>', unsafe_allow_html=True)
 
 # Handle uploaded PDF
 if uploaded_file:
