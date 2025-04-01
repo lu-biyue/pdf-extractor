@@ -132,7 +132,10 @@ from io import BytesIO
 from datetime import datetime
 
 # Sample data
-data = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
+data = pd.DataFrame({
+    "Name": ["Alice", "Bob"],
+    "Score": [85, 92]
+})
 
 # File for download simulation
 download_content = BytesIO()
