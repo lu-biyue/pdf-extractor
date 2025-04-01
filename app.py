@@ -31,7 +31,7 @@ body {
     background-size: var(--s) calc(var(--s) * 0.577);
 }
 
-/* Upload card */
+/* Upload card styling */
 .upload-box {
     background-color: white;
     padding: 2.5rem 2rem;
@@ -50,17 +50,6 @@ body {
     font-weight: 600;
     color: #333;
     margin-bottom: 1.5rem;
-}
-
-/* Drag zone look */
-.custom-upload {
-    border: 2px dashed #7AAFE4;
-    border-radius: 12px;
-    background-color: #D0E8FF;
-    padding: 2rem 1rem;
-    margin-bottom: 1.5rem;
-    color: #2E3B4E;
-    font-weight: 500;
 }
 
 /* Buttons */
