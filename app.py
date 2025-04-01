@@ -17,21 +17,29 @@ st.markdown("""
 /* Hide default Streamlit elements */
 #MainMenu, footer, header {visibility: hidden;}
 
-/* Background container with your custom pattern */
-.container {
-  width: 100%;
-  height: 100vh;
-  --s: 200px;
-  --c1: #1d1d1d;
-  --c2: #4e4f51;
-  --c3: #3c3c3c;
-  background: repeating-conic-gradient(from 30deg, #0000 0 120deg, var(--c3) 0 180deg)
-      calc(0.5 * var(--s)) calc(0.5 * var(--s) * 0.577),
-    repeating-conic-gradient(from 30deg, var(--c1) 0 60deg, var(--c2) 0 120deg, var(--c3) 0 180deg);
-  background-size: var(--s) calc(var(--s) * 0.577);
+
+st.markdown("""
+<style>
+/* Hide default Streamlit elements */
+#MainMenu, footer, header {visibility: hidden;}
+
+/* Apply custom background to full page */
+body {
+    background-color: #2E3B4E;
+    font-family: 'Segoe UI', sans-serif;
+
+    /* Your geometric pattern */
+    --s: 200px;
+    --c1: #1d1d1d;
+    --c2: #4e4f51;
+    --c3: #3c3c3c;
+    background: repeating-conic-gradient(from 30deg, #0000 0 120deg, var(--c3) 0 180deg)
+        calc(0.5 * var(--s)) calc(0.5 * var(--s) * 0.577),
+      repeating-conic-gradient(from 30deg, var(--c1) 0 60deg, var(--c2) 0 120deg, var(--c3) 0 180deg);
+    background-size: var(--s) calc(var(--s) * 0.577);
 }
 
-/* Centered white card */
+/* Card box styles */
 .upload-box {
     background-color: white;
     padding: 2.5rem 2rem;
@@ -40,8 +48,11 @@ st.markdown("""
     margin: 5vh auto;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     text-align: center;
+    position: relative;
+    z-index: 10;
 }
 
+/* Heading */
 .upload-title {
     font-size: 20px;
     font-weight: 600;
@@ -49,6 +60,7 @@ st.markdown("""
     margin-bottom: 1.5rem;
 }
 
+/* Simulated drag zone (optional) */
 .custom-upload {
     border: 2px dashed #7AAFE4;
     border-radius: 12px;
