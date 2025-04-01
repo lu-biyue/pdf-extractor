@@ -5,99 +5,95 @@ from datetime import datetime
 from io import BytesIO
 from sor_converter import extract_structured_items_from_pdf
 
-# Setup
 st.set_page_config(page_title="SOR PDF Extractor", layout="centered")
+
+# Folder for uploads
 UPLOAD_DIR = "uploaded_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Inject CSS for appearance
+# Inject page-wide CSS
 st.markdown("""
-    <style>
-    section[data-testid="stFileUploader"] > div:first-child {
-        background-color: #D0E8FF;
-        border: 2px dashed #7AAFE4;
-        border-radius: 12px;
-        padding: 1.2rem;
-        text-align: center;
-    }
-    </style>
+<style>
+/* Hide default Streamlit elements */
+#MainMenu, footer, header {visibility: hidden;}
+
+body {
+    background-color: #2E3B4E;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.upload-box {
+    background-color: white;
+    padding: 2.5rem 2rem;
+    border-radius: 20px;
+    width: 480px;
+    margin: 5vh auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+.upload-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.custom-upload {
+    border: 2px dashed #7AAFE4;
+    border-radius: 12px;
+    background-color: #D0E8FF;
+    padding: 2rem 1rem;
+    margin-bottom: 1.5rem;
+    color: #2E3B4E;
+    font-weight: 500;
+}
+
+.download-button, .close-button {
+    width: 100%;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    margin-top: 1rem;
+}
+
+.download-button {
+    background-color: #3498DB;
+    color: white;
+}
+
+.download-button:hover {
+    background-color: #2980B9;
+}
+
+.close-button {
+    background-color: #FF5E5E;
+    color: white;
+}
+
+.close-button:hover {
+    background-color: #E04848;
+}
+</style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-    <style>
-    body {
-        background-color: #2E3B4E;
-        font-family: 'Arial', sans-serif;
-    }
-    .upload-box {
-        background-color: #3498DB;
-        padding: 2rem;
-        border-radius: 20px;
-        width: 500px;
-        margin: auto;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        color: white;
-    }
-    .upload-header {
-        font-size: 20px;
-        text-align: center;
-        margin-bottom: 1.5rem;
-        font-weight: bold;
-    }
-    .drag-hint {
-        background-color: #A9D6F2;
-        border: 2px dashed white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        text-align: center;
-        font-size: 16px;
-        color: #2E3B4E;
-        margin-bottom: 1.5rem;
-    }
-    .uploaded-info {
-        background-color: #f5f5f5;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-top: 1rem;
-        color: #333;
-    }
-    .progress-bar {
-        background-color: #4CAF50;
-        height: 8px;
-        border-radius: 5px;
-        margin-top: 10px;
-    }
-    .close-btn {
-        background-color: #F56C6C;
-        color: white;
-        padding: 0.7rem 1.5rem;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 16px;
-        width: 100%;
-        margin-top: 2rem;
-    }
-    .close-btn:hover {
-        background-color: #FF4C4C;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Upload Box
+# Layout container
 st.markdown('<div class="upload-box">', unsafe_allow_html=True)
-st.markdown('<div class="upload-header">UPLOAD SOR PDF FILE</div>', unsafe_allow_html=True)
+st.markdown('<div class="upload-title">UPLOAD SOR PDF FILE</div>', unsafe_allow_html=True)
 
+# File uploader
 uploaded_file = st.file_uploader(
-    "Drag your file here or browse", 
-    type=["pdf"], 
+    label="",
+    type=["pdf"],
     label_visibility="collapsed"
 )
 
-# Simulate drag box
-# st.markdown('<div class="drag-hint">Drag your PDF file here or click to browse</div>', unsafe_allow_html=True)
+# Force visual style on uploader block
+st.markdown('<div class="custom-upload">Drag your PDF file here or click to browse</div>', unsafe_allow_html=True)
 
-# Handle file upload and conversion
+# Handle uploaded PDF
 if uploaded_file:
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     filename = f"{timestamp}_{uploaded_file.name}"
@@ -106,16 +102,9 @@ if uploaded_file:
     with open(save_path, "wb") as f:
         f.write(uploaded_file.read())
 
-    # Simulate loading/progress
-    st.info("🔄 Processing your PDF...")
-    progress = st.progress(0)
-    for i in range(0, 101, 20):
-        progress.progress(i)
-
+    st.success("✅ File uploaded successfully!")
     df = extract_structured_items_from_pdf(save_path)
 
-    st.success(f"✅ Extracted {len(df)} items.")
-    st.markdown('<div class="uploaded-info">Preview of extracted data:</div>', unsafe_allow_html=True)
     st.dataframe(df, use_container_width=True)
 
     # Download Excel
@@ -123,15 +112,19 @@ if uploaded_file:
     df.to_excel(output, index=False)
     output.seek(0)
     st.download_button(
-        "📥 Download Excel",
+        label="📥 Download Excel",
         data=output,
         file_name=f"{timestamp}_SOR_Extracted.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_excel",
+        help="Download your structured Excel file",
+        use_container_width=True
     )
 
-    # Close (reload) button
-    st.markdown("""
-        <button class="close-btn" onclick="window.location.reload();">CLOSE</button>
-    """, unsafe_allow_html=True)
+    # Reload/close button
+    st.markdown(
+        '<button class="close-button" onclick="window.location.reload();">Close</button>',
+        unsafe_allow_html=True
+    )
 
-st.markdown("</div>", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
