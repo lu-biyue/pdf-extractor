@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from datetime import datetime
 from io import BytesIO
-from structured_sor_extractor_v1 import extract_structured_items_from_pdf  # ✅ Import your function
+from sor_converter import extract_structured_items_from_pdf # Import your function
 
 # Setup
 UPLOAD_DIR = "uploaded_files"
