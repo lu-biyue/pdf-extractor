@@ -17,11 +17,21 @@ st.markdown("""
 /* Hide default Streamlit elements */
 #MainMenu, footer, header {visibility: hidden;}
 
-body {
-    background-color: #2E3B4E;
-    font-family: 'Segoe UI', sans-serif;
+/* Background container with your custom pattern */
+.container {
+  width: 100%;
+  height: 100vh;
+  --s: 200px;
+  --c1: #1d1d1d;
+  --c2: #4e4f51;
+  --c3: #3c3c3c;
+  background: repeating-conic-gradient(from 30deg, #0000 0 120deg, var(--c3) 0 180deg)
+      calc(0.5 * var(--s)) calc(0.5 * var(--s) * 0.577),
+    repeating-conic-gradient(from 30deg, var(--c1) 0 60deg, var(--c2) 0 120deg, var(--c3) 0 180deg);
+  background-size: var(--s) calc(var(--s) * 0.577);
 }
 
+/* Centered white card */
 .upload-box {
     background-color: white;
     padding: 2.5rem 2rem;
@@ -79,19 +89,25 @@ body {
 </style>
 """, unsafe_allow_html=True)
 
-# Layout container
+# Begin container
+st.markdown('<div class="container">', unsafe_allow_html=True)
+
+# Upload UI
 st.markdown('<div class="upload-box">', unsafe_allow_html=True)
 st.markdown('<div class="upload-title">UPLOAD SOR PDF FILE</div>', unsafe_allow_html=True)
 
-# File uploader
 uploaded_file = st.file_uploader(
     label="",
     type=["pdf"],
     label_visibility="collapsed"
 )
 
-# Force visual style on uploader block
 st.markdown('<div class="custom-upload">Drag your PDF file here or click to browse</div>', unsafe_allow_html=True)
+
+# ... [your file handling + preview + download logic here] ...
+
+st.markdown('</div>', unsafe_allow_html=True)  # end upload-box
+st.markdown('</div>', unsafe_allow_html=True)  # end container
 
 # Handle uploaded PDF
 if uploaded_file:
