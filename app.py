@@ -13,6 +13,18 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Inject CSS for appearance
 st.markdown("""
     <style>
+    section[data-testid="stFileUploader"] > div:first-child {
+        background-color: #D0E8FF;
+        border: 2px dashed #7AAFE4;
+        border-radius: 12px;
+        padding: 1.2rem;
+        text-align: center;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+    <style>
     body {
         background-color: #2E3B4E;
         font-family: 'Arial', sans-serif;
@@ -83,7 +95,7 @@ uploaded_file = st.file_uploader(
 )
 
 # Simulate drag box
-st.markdown('<div class="drag-hint">Drag your PDF file here or click to browse</div>', unsafe_allow_html=True)
+# st.markdown('<div class="drag-hint">Drag your PDF file here or click to browse</div>', unsafe_allow_html=True)
 
 # Handle file upload and conversion
 if uploaded_file:
