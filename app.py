@@ -3,21 +3,14 @@ import os
 import pandas as pd
 from datetime import datetime
 from io import BytesIO
-from sor_converter import extract_structured_items_from_pdf
+from sor_converter import extract_structured_items_from_pdf  # Make sure this file is in your project
 
+# Streamlit setup
 st.set_page_config(page_title="SOR PDF Extractor", layout="centered")
-
-# Folder for uploads
 UPLOAD_DIR = "uploaded_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Inject page-wide CSS
-st.markdown("""
-<style>
-/* Hide default Streamlit elements */
-#MainMenu, footer, header {visibility: hidden;}
-
-
+# ✅ Inject CSS
 st.markdown("""
 <style>
 /* Hide default Streamlit elements */
@@ -28,7 +21,6 @@ body {
     background-color: #2E3B4E;
     font-family: 'Segoe UI', sans-serif;
 
-    /* Your geometric pattern */
     --s: 200px;
     --c1: #1d1d1d;
     --c2: #4e4f51;
@@ -39,7 +31,7 @@ body {
     background-size: var(--s) calc(var(--s) * 0.577);
 }
 
-/* Card box styles */
+/* Upload card */
 .upload-box {
     background-color: white;
     padding: 2.5rem 2rem;
@@ -60,7 +52,7 @@ body {
     margin-bottom: 1.5rem;
 }
 
-/* Simulated drag zone (optional) */
+/* Drag zone look */
 .custom-upload {
     border: 2px dashed #7AAFE4;
     border-radius: 12px;
@@ -71,6 +63,7 @@ body {
     font-weight: 500;
 }
 
+/* Buttons */
 .download-button, .close-button {
     width: 100%;
     border: none;
@@ -101,25 +94,13 @@ body {
 </style>
 """, unsafe_allow_html=True)
 
-# Begin container
-st.markdown('<div class="container">', unsafe_allow_html=True)
-
-# Upload UI
+# ✅ Main UI block
 st.markdown('<div class="upload-box">', unsafe_allow_html=True)
 st.markdown('<div class="upload-title">UPLOAD SOR PDF FILE</div>', unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader(
-    label="",
-    type=["pdf"],
-    label_visibility="collapsed"
-)
-
+# Upload
+uploaded_file = st.file_uploader("Upload PDF", type=["pdf"], label_visibility="collapsed")
 st.markdown('<div class="custom-upload">Drag your PDF file here or click to browse</div>', unsafe_allow_html=True)
-
-# ... [your file handling + preview + download logic here] ...
-
-st.markdown('</div>', unsafe_allow_html=True)  # end upload-box
-st.markdown('</div>', unsafe_allow_html=True)  # end container
 
 # Handle uploaded PDF
 if uploaded_file:
@@ -130,26 +111,26 @@ if uploaded_file:
     with open(save_path, "wb") as f:
         f.write(uploaded_file.read())
 
-    st.success("✅ File uploaded successfully!")
-    df = extract_structured_items_from_pdf(save_path)
+    st.success("✅ File uploaded successfully. Extracting content...")
 
+    # Convert PDF → DataFrame
+    df = extract_structured_items_from_pdf(save_path)
     st.dataframe(df, use_container_width=True)
 
     # Download Excel
     output = BytesIO()
     df.to_excel(output, index=False)
     output.seek(0)
+
     st.download_button(
         label="📥 Download Excel",
         data=output,
         file_name=f"{timestamp}_SOR_Extracted.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download_excel",
-        help="Download your structured Excel file",
-        use_container_width=True
+        key="download_excel"
     )
 
-    # Reload/close button
+    # Close (reload) button
     st.markdown(
         '<button class="close-button" onclick="window.location.reload();">Close</button>',
         unsafe_allow_html=True
