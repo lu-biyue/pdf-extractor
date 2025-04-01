@@ -1,31 +1,33 @@
-# upload_ui_app.py
 import streamlit as st
 import os
 import pandas as pd
 from datetime import datetime
 from io import BytesIO
-from sor_converter import extract_structured_items_from_pdf # Import your function
+from sor_converter import extract_structured_items_from_pdf
 
 # Setup
+st.set_page_config(page_title="SOR PDF Extractor", layout="centered")
 UPLOAD_DIR = "uploaded_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-st.set_page_config(page_title="SOR PDF Uploader", layout="centered")
 
+# Inject CSS for design
 st.markdown("""
 <style>
-body { background-color: #8CB7F5; }
+body {
+    background-color: #F3F6FA;
+}
 .upload-box {
     background-color: white;
     padding: 2rem;
-    border-radius: 16px;
-    width: 360px;
+    border-radius: 20px;
+    width: 450px;
     margin: auto;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
-.upload-header {
+.upload-title {
     text-align: center;
-    font-size: 14px;
-    color: #999;
+    font-size: 16px;
+    color: #888;
     letter-spacing: 1px;
     margin-bottom: 1.5rem;
 }
@@ -33,9 +35,9 @@ body { background-color: #8CB7F5; }
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="upload-box">', unsafe_allow_html=True)
-st.markdown('<div class="upload-header">UPLOAD SOR PDF FILE</div>', unsafe_allow_html=True)
+st.markdown('<div class="upload-title">UPLOAD SOR PDF FILE</div>', unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("Drop a PDF here or click to browse", type=["pdf"], label_visibility="collapsed")
+uploaded_file = st.file_uploader("Drag and drop or browse PDF", type=["pdf"], label_visibility="collapsed")
 
 if uploaded_file:
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -45,19 +47,19 @@ if uploaded_file:
     with open(save_path, "wb") as f:
         f.write(uploaded_file.read())
 
-    # ✅ Use your converter function
-    st.info("🔄 Extracting structured items from PDF...")
+    # Process and display
+    st.info("🔍 Extracting items...")
     df = extract_structured_items_from_pdf(save_path)
 
-    st.success(f"✅ Extracted {len(df)} items.")
+    st.success(f"✅ {len(df)} items extracted.")
     st.dataframe(df, use_container_width=True)
 
-    # 📥 Download Excel
+    # Excel download button
     buffer = BytesIO()
     df.to_excel(buffer, index=False)
     buffer.seek(0)
-
-    st.download_button("📥 Download Excel", data=buffer, file_name=f"{timestamp}_extracted.xlsx",
+    st.download_button("📥 Download Excel", buffer,
+                       file_name=f"{timestamp}_SOR_Extracted.xlsx",
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 st.markdown("</div>", unsafe_allow_html=True)
