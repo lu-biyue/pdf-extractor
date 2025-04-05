@@ -14,7 +14,7 @@ st.set_page_config(
 # Logo + Title
 col1, col2 = st.columns([1, 8])
 with col1:
-    st.image("logo.png", width=70)  # Replace with your logo filename
+    st.image("https://cdn-icons-png.flaticon.com/512/124/124837.png", width=70)
 with col2:
     st.title("PDF to Excel Converter")
 
