@@ -11,19 +11,33 @@ st.set_page_config(
     page_icon="📄",
 )
 
-# Logo + Title
-col1, col2 = st.columns([1, 8])
-with col1:
-    st.image("https://cdn-icons-png.flaticon.com/512/124/124837.png", width=70)
-with col2:
-    st.title("PDF to Excel Converter")
+st.image("https://cdn-icons-png.flaticon.com/512/124/124837.png", width=78)
 
-st.caption("Convert structured PDFs into clean Excel files with a single click! 🎯")
+st.write(
+    """
+    # SOR Comparison
+    """
+)
+
+st.info(
+    """
+    Compare SOR with a single click!
+    """,
+    icon="🎯",
+)
+# # Logo + Title
+# col1, col2 = st.columns([1, 8])
+# with col1:
+#     st.image("https://cdn-icons-png.flaticon.com/512/124/124837.png", width=70)
+# with col2:
+#     st.title("PDF to Excel Converter")
+
+# st.caption("Convert structured PDFs into clean Excel files with a single click! 🎯")
 
 st.divider()
 
 # Upload Section
-uploaded_file = st.file_uploader("📤 Upload your PDF file", type=["pdf"])
+uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
 if uploaded_file:
     st.success("✅ PDF uploaded successfully")
 
