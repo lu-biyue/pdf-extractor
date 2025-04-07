@@ -39,7 +39,7 @@ st.divider()
 # Upload Section
 uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
 if uploaded_file:
-    st.success("✅ PDF uploaded successfully")
+    st.success("✅ Excel uploaded successfully")
 
     # Save file
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -72,7 +72,7 @@ if uploaded_file:
         st.experimental_rerun()
 
 else:
-    st.info("Please upload a PDF to begin.")
+    st.info("Please upload an Excel to begin.")
     
 # import streamlit as st
 # import os
