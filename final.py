@@ -225,8 +225,6 @@ def main():
     #     temp_copied = []
     #     if not "INPUT" in ls.columns[i+2]:
     #         continue
-    # With this (dynamic SOR 2, 3, etc. detection):
-    sor_comparison_sheets = [s for s in all_sheets if s.startswith("SOR ") and not s.startswith("SOR 1")]
     
         # d3_df = pd.read_excel(input, sheet_name=ls.columns[i+2].strip())
         # for index, row in ls.iterrows():
@@ -272,52 +270,53 @@ def main():
         #     database = pd.concat([database, final],axis=1)
 
     # Get all relevant SOR sheets except "SOR 1"
-sor_comparison_sheets = [s for s in all_sheets if s.startswith("SOR ") and not s.startswith("SOR 1")]
+    sor_comparison_sheets = [s for s in all_sheets if s.startswith("SOR ") and not s.startswith("SOR 1")]
 
-for i, sheet_name in enumerate(sor_comparison_sheets):
-    temp_acmv = []
-    temp_copied = []
+    for sheet_name in sor_comparison_sheets:
+        if sheet_name not in ls.columns:
+            continue  # Skip if the column does not exist in HEADER COMPARISON
+    
+        temp_acmv = []
+        temp_copied = []
+        d3_df = pd.read_excel(input, sheet_name=sheet_name)
+        prefix = sheet_name
 
-    d3_df = pd.read_excel(input, sheet_name=sheet_name)
-    prefix = sheet_name  # You can also extract label in brackets if needed
-
-    for index, row in ls.iterrows():
-        acmv_str = row.iloc[1]
-        d3_str = row.iloc[i + 2] if (i + 2) < len(row) else None
-
-        if pd.isna(d3_str) and pd.isna(acmv_str):
-            break
-        elif pd.isna(d3_str):
+        for index, row in ls.iterrows():
+            acmv_str = row.iloc[1]
+            d3_str = row[sheet_name]  # Match sheet name to column
+    
+            if pd.isna(d3_str) and pd.isna(acmv_str):
+                break
+            elif pd.isna(d3_str):
+                filtered_acmv = filter_df(acmv_df, acmv_str)
+                updated_acmv_df = empty(filtered_acmv, prefix)
+                temp_acmv.append(updated_acmv_df)
+                continue
+            elif pd.isna(acmv_str):
+                continue
+    
             filtered_acmv = filter_df(acmv_df, acmv_str)
-            updated_acmv_df = empty(filtered_acmv, prefix)
+            filtered_d3 = filter_df(d3_df, d3_str)
+    
+            updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
+            updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
+    
+            temp_copied.append(d3_extras)
             temp_acmv.append(updated_acmv_df)
-            continue
-        elif pd.isna(acmv_str):
-            continue
-
-        filtered_acmv = filter_df(acmv_df, acmv_str)
-        filtered_d3 = filter_df(d3_df, d3_str)
-
-        updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
-        updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
-
-        temp_copied.append(d3_extras)
-        temp_acmv.append(updated_acmv_df)
 
     d3_additional = pd.concat(temp_copied, ignore_index=True)
-    with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a') as writer:
+    with pd.ExcelWriter(file_path, engine='openpyxl', mode='a') as writer:
         d3_additional.to_excel(writer, sheet_name=f"{sheet_name} Additionals", index=False)
 
     final = pd.concat(temp_acmv, ignore_index=True)
-    if i == 0:
-        database = final
-    else:
-        database = pd.concat([database, final], axis=1)
+    database = final if database.empty else pd.concat([database, final], axis=1)
+
         ##########
-    
-    with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-        database = reorder(database)
-        database.to_excel(writer, sheet_name="ACMV", index=False)
+
+   # ✅ Final reorder and write ACMV only once, after loop   
+with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+    database = reorder(database)
+    database.to_excel(writer, sheet_name="ACMV", index=False)
         
 def color_check_cells(file_path="output.xlsx"):
 
