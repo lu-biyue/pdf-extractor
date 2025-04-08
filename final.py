@@ -200,14 +200,13 @@ def empty(acmv_df, prefix):
     #acmv_df["Clean"] = None
     return acmv_df
 
-uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
-if uploaded_file:
-    input = "acmv_final.xlsx"
-    with open(input, "wb") as f:
-        f.write(uploaded_file.read())
-    main()
 
 def main():
+    uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
+    if uploaded_file:
+    input = "acmv_final.xlsx"
+    with open(input, "wb") as f:
+        f.write(uploaded_file.read())     
     output = "output.xlsx"
 
     # Step 1: Initialize output Excel
