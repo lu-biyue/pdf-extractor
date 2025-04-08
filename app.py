@@ -61,8 +61,6 @@ if uploaded_file is not None:
 
     except Exception as e:
         st.error(f"⚠️ An error occurred: {e}")
-# else:
-#     st.info("Please upload an Excel file to begin.")
     
 # uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
 # if uploaded_file:
@@ -100,21 +98,21 @@ if uploaded_file is not None:
     # with st.spinner("🔍 Extracting data..."):
     #     df = extract_structured_items_from_pdf(filename)
 
-    # Preview
-    st.subheader("📋 Preview Extracted Data")
-    st.dataframe(df, use_container_width=True)
+    # # Preview
+    # st.subheader("📋 Preview Extracted Data")
+    # st.dataframe(df, use_container_width=True)
 
-    # Download
-    buffer = BytesIO()
-    df.to_excel(buffer, index=False)
-    buffer.seek(0)
+    # # Download
+    # buffer = BytesIO()
+    # df.to_excel(buffer, index=False)
+    # buffer.seek(0)
 
-    st.download_button(
-        label="📥 Download Excel File",
-        data=buffer,
-        file_name=f"{timestamp}_output.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    # st.download_button(
+    #     label="📥 Download Excel File",
+    #     data=buffer,
+    #     file_name=f"{timestamp}_output.xlsx",
+    #     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    # )
 
     # Optional clear/reset
     if st.button("🔁 Clear File"):
