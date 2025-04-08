@@ -16,7 +16,7 @@ st.image("https://cdn-icons-png.flaticon.com/512/124/124837.png", width=78)
 
 st.write(
     """
-    # SOR Comparison
+    # SOR Rate Comparison
     """
 )
 
