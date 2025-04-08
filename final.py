@@ -329,7 +329,9 @@ def color_check_cells(file_path="output.xlsx"):
 
 
 # Run the main process and then color cells as needed
-main()
-color_check_cells()
-
+# main()
+# color_check_cells()
+if __name__ == "__main__":
+    main()
+    color_check_cells()
 
