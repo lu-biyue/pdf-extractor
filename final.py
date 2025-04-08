@@ -204,85 +204,86 @@ def empty(acmv_df, prefix):
 def main():
     uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
     if uploaded_file:
-    input = "acmv_final.xlsx"
-    with open(input, "wb") as f:
-        f.write(uploaded_file.read())     
-    output = "output.xlsx"
-
-    # Step 1: Initialize output Excel
-    pd.DataFrame().to_excel(output, sheet_name="Sheet1", index=False)
-
-    # Step 2: Load sheet names
-    all_sheets = pd.ExcelFile(input).sheet_names
-    sor1_sheet = next((s for s in all_sheets if re.match(r"SOR\s*1\s*\(.*?\)", s)), None)
-    sor_comparison_sheets = [s for s in all_sheets if re.match(r"SOR\s*\d+\s*\(.*?\)", s) and s != sor1_sheet]
-
-    if not sor1_sheet:
-        print("❌ Could not find base sheet 'SOR 1 (...)'")
-        return
-
-    acmv_df = pd.read_excel(input, sheet_name=sor1_sheet)
-    header_comparison = pd.read_excel(input, sheet_name="HEADER COMPARISON")
-
-    database = pd.DataFrame()
-
-    for sheet_name in sor_comparison_sheets:
-        if sheet_name not in header_comparison.columns:
-            continue
-
-        temp_acmv = []
-        temp_copied = []
-
-        d3_df = pd.read_excel(input, sheet_name=sheet_name)
-
-        # Extract 'PROPEL' or 'MOE' from (PROPEL)
-        match = re.search(r"\((.*?)\)", sheet_name)
-        prefix = match.group(1) if match else sheet_name
-
-        for idx, row in header_comparison.iterrows():
-            try:
-                # Skip empty or malformed rows
-                if row.isnull().all() or len(row) < 2:
-                    continue
-
-                acmv_str = row.iloc[1]  # 2nd column = SOR 1
-                d3_str = row[sheet_name] if sheet_name in row else None
-
-                if pd.isna(acmv_str) and pd.isna(d3_str):
-                    break
-                elif pd.isna(d3_str):
-                    filtered_acmv = filter_df(acmv_df, acmv_str)
-                    updated_acmv_df = empty(filtered_acmv, prefix)
-                    temp_acmv.append(updated_acmv_df)
-                    continue
-                elif pd.isna(acmv_str):
-                    continue
-
-                filtered_acmv = filter_df(acmv_df, acmv_str)
-                filtered_d3 = filter_df(d3_df, d3_str)
-
-                updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
-                updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
-
-                temp_acmv.append(updated_acmv_df)
-                temp_copied.append(d3_extras)
-
-            except Exception as e:
-                print(f"⚠️ Row {idx} caused error: {e}")
+        input = "acmv_final.xlsx"
+        with open(input, "wb") as f:
+            f.write(uploaded_file.read())     
+            
+        output = "output.xlsx"
+    
+        # Step 1: Initialize output Excel
+        pd.DataFrame().to_excel(output, sheet_name="Sheet1", index=False)
+    
+        # Step 2: Load sheet names
+        all_sheets = pd.ExcelFile(input).sheet_names
+        sor1_sheet = next((s for s in all_sheets if re.match(r"SOR\s*1\s*\(.*?\)", s)), None)
+        sor_comparison_sheets = [s for s in all_sheets if re.match(r"SOR\s*\d+\s*\(.*?\)", s) and s != sor1_sheet]
+    
+        if not sor1_sheet:
+            print("❌ Could not find base sheet 'SOR 1 (...)'")
+            return
+    
+        acmv_df = pd.read_excel(input, sheet_name=sor1_sheet)
+        header_comparison = pd.read_excel(input, sheet_name="HEADER COMPARISON")
+    
+        database = pd.DataFrame()
+    
+        for sheet_name in sor_comparison_sheets:
+            if sheet_name not in header_comparison.columns:
                 continue
-
-        # Save unmatched SOR entries
-        d3_additional = pd.concat(temp_copied, ignore_index=True)
-        with pd.ExcelWriter(output, engine="openpyxl", mode="a") as writer:
-            d3_additional.to_excel(writer, sheet_name=f"{sheet_name} Additionals", index=False)
-
-        final = pd.concat(temp_acmv, ignore_index=True)
-        database = final if database.empty else pd.concat([database, final], axis=1)
-
-    # Final reorder and save
-    with pd.ExcelWriter(output, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-        database = reorder(database)
-        database.to_excel(writer, sheet_name="ACMV", index=False)
+    
+            temp_acmv = []
+            temp_copied = []
+    
+            d3_df = pd.read_excel(input, sheet_name=sheet_name)
+    
+            # Extract 'PROPEL' or 'MOE' from (PROPEL)
+            match = re.search(r"\((.*?)\)", sheet_name)
+            prefix = match.group(1) if match else sheet_name
+    
+            for idx, row in header_comparison.iterrows():
+                try:
+                    # Skip empty or malformed rows
+                    if row.isnull().all() or len(row) < 2:
+                        continue
+    
+                    acmv_str = row.iloc[1]  # 2nd column = SOR 1
+                    d3_str = row[sheet_name] if sheet_name in row else None
+    
+                    if pd.isna(acmv_str) and pd.isna(d3_str):
+                        break
+                    elif pd.isna(d3_str):
+                        filtered_acmv = filter_df(acmv_df, acmv_str)
+                        updated_acmv_df = empty(filtered_acmv, prefix)
+                        temp_acmv.append(updated_acmv_df)
+                        continue
+                    elif pd.isna(acmv_str):
+                        continue
+    
+                    filtered_acmv = filter_df(acmv_df, acmv_str)
+                    filtered_d3 = filter_df(d3_df, d3_str)
+    
+                    updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
+                    updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
+    
+                    temp_acmv.append(updated_acmv_df)
+                    temp_copied.append(d3_extras)
+    
+                except Exception as e:
+                    print(f"⚠️ Row {idx} caused error: {e}")
+                    continue
+    
+            # Save unmatched SOR entries
+            d3_additional = pd.concat(temp_copied, ignore_index=True)
+            with pd.ExcelWriter(output, engine="openpyxl", mode="a") as writer:
+                d3_additional.to_excel(writer, sheet_name=f"{sheet_name} Additionals", index=False)
+    
+            final = pd.concat(temp_acmv, ignore_index=True)
+            database = final if database.empty else pd.concat([database, final], axis=1)
+    
+        # Final reorder and save
+        with pd.ExcelWriter(output, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+            database = reorder(database)
+            database.to_excel(writer, sheet_name="ACMV", index=False)
 
 #####################
 # def main():
