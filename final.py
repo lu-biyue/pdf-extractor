@@ -283,7 +283,75 @@ def main():
         with pd.ExcelWriter(file_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
             database = reorder(database)
             database.to_excel(writer, sheet_name="ACMV", index=False)
-            
+
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+
+def color_check_cells(file_path="output.xlsx"):
+    wb = load_workbook(file_path)
+
+    # Step 1: Remove default sheet if it exists
+    if 'Sheet1' in wb.sheetnames:
+        wb.remove(wb['Sheet1'])
+
+    # Step 2: Move the last sheet to the front
+    sheet_names = wb.sheetnames
+    if sheet_names:
+        last_sheet = wb[sheetnames[-1]]
+        wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(last_sheet)))
+
+    # Step 3: Ensure "ACMV" exists
+    if "ACMV" not in wb.sheetnames:
+        print("❌ 'ACMV' sheet not found in workbook.")
+        return
+
+    ws = wb["ACMV"]
+
+    # Step 4: Identify "Check" columns
+    check_columns = []
+    for cell in ws[1]:
+        if cell.value and "check" in str(cell.value).lower():
+            check_columns.append(cell.column)
+
+    if not check_columns:
+        print("⚠️ No 'Check' columns found in ACMV sheet.")
+        return
+
+    # Step 5: Define color styles
+    purple_fill = PatternFill("solid", fgColor="d6b6d6")   # Score diff only
+    blue_fill = PatternFill("solid", fgColor="b6c9d6")     # Price diff only
+    yellow_fill = PatternFill("solid", fgColor="f7f7be")   # Both
+    remove_fill = PatternFill("solid", fgColor="92d050")   # Too many ACMV
+
+    # Step 6: Apply coloring
+    for row in range(2, ws.max_row + 1):
+        for col in check_columns:
+            check_cell = ws.cell(row=row, column=col)
+            if check_cell.value:
+                text = str(check_cell.value).lower()
+
+                if "too many acmv" in text:
+                    fill = remove_fill
+                else:
+                    has_score = "score" in text
+                    has_price = "price" in text
+                    if has_score and has_price:
+                        fill = yellow_fill
+                    elif has_score:
+                        fill = purple_fill
+                    elif has_price:
+                        fill = blue_fill
+                    else:
+                        continue  # No recognized label
+
+                # Color the Check cell + 3 cells to the left
+                for c in range(max(1, col - 3), col + 1):
+                    ws.cell(row=row, column=c).fill = fill
+
+    # Step 7: Save
+    wb.save(file_path)
+    print("✅ Highlighting applied.")
+    
 ##########
 # def main():
 #     #output file
@@ -356,64 +424,64 @@ def main():
 #         database.to_excel(writer, sheet_name="ACMV", index=False)
 ###########
         
-def color_check_cells(file_path="output.xlsx"):
+# def color_check_cells(file_path="output.xlsx"):
 
-    wb = load_workbook(file_path)
+#     wb = load_workbook(file_path)
 
-    if 'Sheet1' in wb.sheetnames:
-        # Remove the sheet called 'Sheet1'
-        sheet_to_remove = wb['Sheet1']
-        wb.remove(sheet_to_remove)
-    sheet_names = wb.sheetnames
-    last_sheet = wb[sheet_names[-1]]  # Last sheet
-    wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(last_sheet))) 
+#     if 'Sheet1' in wb.sheetnames:
+#         # Remove the sheet called 'Sheet1'
+#         sheet_to_remove = wb['Sheet1']
+#         wb.remove(sheet_to_remove)
+#     sheet_names = wb.sheetnames
+#     last_sheet = wb[sheet_names[-1]]  # Last sheet
+#     wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(last_sheet))) 
 
-    if "ACMV" not in wb.sheetnames:
-        print("ACMV sheet not found in workbook")
-        return
-    ws = wb["ACMV"]
+#     if "ACMV" not in wb.sheetnames:
+#         print("ACMV sheet not found in workbook")
+#         return
+#     ws = wb["ACMV"]
     
-    # Identify all columns with headers containing "Check" (case-insensitive)
-    check_columns = []
-    for cell in ws[1]:
-        if cell.value and "check" in str(cell.value).lower():
-            check_columns.append(cell.column)
+#     # Identify all columns with headers containing "Check" (case-insensitive)
+#     check_columns = []
+#     for cell in ws[1]:
+#         if cell.value and "check" in str(cell.value).lower():
+#             check_columns.append(cell.column)
     
-    if not check_columns:
-        print("No Check columns found in ACMV sheet")
-        return
+#     if not check_columns:
+#         print("No Check columns found in ACMV sheet")
+#         return
 
-    # Define fill styles
-    purple_fill = PatternFill("solid", fgColor="d6b6d6")  # For Score diff only
-    blue_fill = PatternFill("solid", fgColor="b6c9d6")      # For Price diff only
-    yellow_fill = PatternFill("solid", fgColor="f7f7be")    # For both Score and Price diffs
-    remove_fill = PatternFill("solid", fgColor="92d050")              # To green fill
+#     # Define fill styles
+#     purple_fill = PatternFill("solid", fgColor="d6b6d6")  # For Score diff only
+#     blue_fill = PatternFill("solid", fgColor="b6c9d6")      # For Price diff only
+#     yellow_fill = PatternFill("solid", fgColor="f7f7be")    # For both Score and Price diffs
+#     remove_fill = PatternFill("solid", fgColor="92d050")              # To green fill
     
-    # Iterate over rows (starting from row 2, assuming row 1 is the header)
-    for row in range(2, ws.max_row + 1):
-        for col in check_columns:
-            check_cell = ws.cell(row=row, column=col)
-            if check_cell.value is not None:
-                text = str(check_cell.value).lower()
+#     # Iterate over rows (starting from row 2, assuming row 1 is the header)
+#     for row in range(2, ws.max_row + 1):
+#         for col in check_columns:
+#             check_cell = ws.cell(row=row, column=col)
+#             if check_cell.value is not None:
+#                 text = str(check_cell.value).lower()
                 
-                # If "Too many ACMV" is present, remove fill
-                if "too many acmv" in text:
-                    fill = remove_fill
-                else:
-                    has_score = "score" in text
-                    has_price = "price" in text
-                    if has_score and has_price:
-                        fill = yellow_fill
-                    elif has_score:
-                        fill = purple_fill
-                    elif has_price:
-                        fill = blue_fill
+#                 # If "Too many ACMV" is present, remove fill
+#                 if "too many acmv" in text:
+#                     fill = remove_fill
+#                 else:
+#                     has_score = "score" in text
+#                     has_price = "price" in text
+#                     if has_score and has_price:
+#                         fill = yellow_fill
+#                     elif has_score:
+#                         fill = purple_fill
+#                     elif has_price:
+#                         fill = blue_fill
 
-                # Apply the fill to the check cell and the three cells immediately to its left (if available)
-                for c in range(max(1, col - 3), col + 1):
-                    ws.cell(row=row, column=c).fill = fill
+#                 # Apply the fill to the check cell and the three cells immediately to its left (if available)
+#                 for c in range(max(1, col - 3), col + 1):
+#                     ws.cell(row=row, column=c).fill = fill
                         
-    wb.save(file_path)
+#     wb.save(file_path)
 
 
 # Run the main process and then color cells as needed
