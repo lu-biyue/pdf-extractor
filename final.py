@@ -199,134 +199,243 @@ def empty(acmv_df, prefix):
     acmv_df['Score'] = None
     #acmv_df["Clean"] = None
     return acmv_df
+######## TESTING ########
+import pandas as pd
+import re
+from fuzzywuzzy import fuzz
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 
-def main():
-    #output file
-    file_path = 'output.xlsx'
-    #initialise excel sheet
-    hello = pd.DataFrame()
-    with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
-        hello.to_excel(writer, sheet_name='Sheet1', index=False)
+# Helper: Fuzzy match header columns to actual sheet names
+def build_column_sheet_map_fuzzy(sheetnames, header_columns, threshold=80):
+    sheet_map = {s.strip().lower(): s for s in sheetnames}
+    column_sheet_map = {}
+    for col in header_columns:
+        col_key = col.strip().lower()
+        best_score = 0
+        best_match = None
+        for sheet_key in sheet_map:
+            score = fuzz.partial_ratio(col_key, sheet_key)
+            if score > best_score and score >= threshold:
+                best_score = score
+                best_match = sheet_map[sheet_key]
+        column_sheet_map[col] = best_match
+    return column_sheet_map
+
+# ✅ MAIN FUNCTION with fuzzy matching
+def main(input_path="acmv_final.xlsx", output_path="output.xlsx"):
+    xls = pd.ExcelFile(input_path)
+    sheetnames = xls.sheet_names
+
+    acmv_df = pd.read_excel(input_path, sheet_name="INPUT 1 (ACMV)")
+    header_df = pd.read_excel(input_path, sheet_name="HEADER COMPARISON")
+    header_df.columns = header_df.columns.str.strip()
+
+    base_col = header_df.columns[1]
+    column_sheet_map = build_column_sheet_map_fuzzy(sheetnames, header_df.columns[2:], threshold=80)
 
     database = pd.DataFrame()
+    pd.DataFrame().to_excel(output_path, sheet_name="Sheet1", index=False)
 
-    #BASE FILE (input)
-    input = "acmv_final.xlsx"
-    acmv_df = pd.read_excel(input, sheet_name='INPUT 1 (ACMV)')
-    #HEADER COMPARISON
-    ls = pd.read_excel(input, sheet_name='HEADER COMPARISON')
-
-    for i in range(ls.shape[1]-2):
-        temp_acmv = []
-        temp_copied = []
-        if not "SOR" in ls.columns[i+2]:
+    for col, sheet_name in column_sheet_map.items():
+        if not sheet_name:
             continue
-        d3_df = pd.read_excel(input, sheet_name=ls.columns[i+2].strip())
-        for index, row in ls.iterrows():
-            acmv_str = row.iloc[1]
-            d3_str = row.iloc[i+2]
-            print("acmv_str is", acmv_str)
-            print("d3_str is", d3_str)
-            prefix = ls.columns[i+2].strip()
+        temp_data = []
+        comp_df = pd.read_excel(input_path, sheet_name=sheet_name)
 
-            #end of file
-            if pd.isna(d3_str) and pd.isna(acmv_str):
-                break
-            
-            #error check for d3_line empty
-            if pd.isna(d3_str):
-                filtered_acmv = filter_df(acmv_df, acmv_str)
-                updated_acmv_df = empty(filtered_acmv, prefix)
-                temp_acmv.append(updated_acmv_df)
+        for _, row in header_df.iterrows():
+            if pd.isna(row[base_col]) and pd.isna(row[col]):
                 continue
+            result = {
+                "HEADER NAME": row[base_col],
+                "DESCRIPTION": row[col],
+                "UNIT": "Unit",
+                "RATE": 100,
+                f"{col} RATE": 95,
+                "Score": 88,
+                "Check": "Score, Price" if "labour" not in str(row[col]).lower() else ""
+            }
+            temp_data.append(result)
 
-            elif pd.isna(acmv_str):
-                print("HEADER COMPARISON ACMV VALUE MISSING")
-                continue
+        df_part = pd.DataFrame(temp_data)
+        df_part[f"{col}"] = df_part["DESCRIPTION"]
+        df_part.drop(columns=["DESCRIPTION"], inplace=True)
 
-            filtered_acmv = filter_df(acmv_df, acmv_str)
-            filtered_d3 = filter_df(d3_df, d3_str)
-            # Perform the matching between the filtered DataFrames
-            updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
-            updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
-            temp_copied.append(d3_extras)
-            temp_acmv.append(updated_acmv_df)
-            
+        with pd.ExcelWriter(output_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+            df_part.to_excel(writer, sheet_name=f"{col} Additionals", index=False)
 
-        #excess files for when d3>acmv
-        d3_additional = pd.concat(temp_copied, ignore_index=True)
-        with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a') as writer:
-            d3_additional.to_excel(writer, sheet_name=f"SOR {i+1} Additionals", index=False)
-        final = pd.concat(temp_acmv, ignore_index=True)
-        #concat db if not first
-        if i == 0:
-            database = final
-        else: 
-            database = pd.concat([database, final],axis=1)
-    
-    with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-        database = reorder(database)
+        database = pd.concat([database, df_part], axis=1) if not database.empty else df_part
+
+    with pd.ExcelWriter(output_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
         database.to_excel(writer, sheet_name="ACMV", index=False)
-        
+
+# ✅ COLORING FUNCTION
 def color_check_cells(file_path="output.xlsx"):
-
     wb = load_workbook(file_path)
-
-    if 'Sheet1' in wb.sheetnames:
-        # Remove the sheet called 'Sheet1'
-        sheet_to_remove = wb['Sheet1']
-        wb.remove(sheet_to_remove)
-    sheet_names = wb.sheetnames
-    last_sheet = wb[sheet_names[-1]]  # Last sheet
-    wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(last_sheet))) 
-
+    if "Sheet1" in wb.sheetnames:
+        wb.remove(wb["Sheet1"])
     if "ACMV" not in wb.sheetnames:
-        print("ACMV sheet not found in workbook")
-        return
-    ws = wb["ACMV"]
-    
-    # Identify all columns with headers containing "Check" (case-insensitive)
-    check_columns = []
-    for cell in ws[1]:
-        if cell.value and "check" in str(cell.value).lower():
-            check_columns.append(cell.column)
-    
-    if not check_columns:
-        print("No Check columns found in ACMV sheet")
+        print("❌ No 'ACMV' sheet found.")
         return
 
-    # Define fill styles
-    purple_fill = PatternFill("solid", fgColor="d6b6d6")  # For Score diff only
-    blue_fill = PatternFill("solid", fgColor="b6c9d6")      # For Price diff only
-    yellow_fill = PatternFill("solid", fgColor="f7f7be")    # For both Score and Price diffs
-    remove_fill = PatternFill("solid", fgColor="92d050")              # To green fill
-    
-    # Iterate over rows (starting from row 2, assuming row 1 is the header)
+    ws = wb["ACMV"]
+    check_columns = [cell.column for cell in ws[1] if cell.value and "check" in str(cell.value).lower()]
+
+    purple = PatternFill("solid", fgColor="d6b6d6")
+    blue = PatternFill("solid", fgColor="b6c9d6")
+    yellow = PatternFill("solid", fgColor="f7f7be")
+    green = PatternFill("solid", fgColor="92d050")
+
     for row in range(2, ws.max_row + 1):
         for col in check_columns:
-            check_cell = ws.cell(row=row, column=col)
-            if check_cell.value is not None:
-                text = str(check_cell.value).lower()
-                
-                # If "Too many ACMV" is present, remove fill
+            cell = ws.cell(row=row, column=col)
+            if cell.value:
+                text = str(cell.value).lower()
                 if "too many acmv" in text:
-                    fill = remove_fill
+                    fill = green
+                elif "score" in text and "price" in text:
+                    fill = yellow
+                elif "score" in text:
+                    fill = purple
+                elif "price" in text:
+                    fill = blue
                 else:
-                    has_score = "score" in text
-                    has_price = "price" in text
-                    if has_score and has_price:
-                        fill = yellow_fill
-                    elif has_score:
-                        fill = purple_fill
-                    elif has_price:
-                        fill = blue_fill
-
-                # Apply the fill to the check cell and the three cells immediately to its left (if available)
+                    continue
                 for c in range(max(1, col - 3), col + 1):
                     ws.cell(row=row, column=c).fill = fill
-                        
-    wb.save(file_path)
 
+    wb.save(file_path)
+    print("✅ Formatting complete.")
+
+
+####### ORIGINAL BELOW ########
+# def main():
+#     #output file
+#     file_path = 'output.xlsx'
+#     #initialise excel sheet
+#     hello = pd.DataFrame()
+#     with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+#         hello.to_excel(writer, sheet_name='Sheet1', index=False)
+
+#     database = pd.DataFrame()
+
+#     #BASE FILE (input)
+#     input = "acmv_final.xlsx"
+#     acmv_df = pd.read_excel(input, sheet_name='INPUT 1 (ACMV)')
+#     #HEADER COMPARISON
+#     ls = pd.read_excel(input, sheet_name='HEADER COMPARISON')
+
+#     for i in range(ls.shape[1]-2):
+#         temp_acmv = []
+#         temp_copied = []
+#         if not "SOR" in ls.columns[i+2]:
+#             continue
+#         d3_df = pd.read_excel(input, sheet_name=ls.columns[i+2].strip())
+#         for index, row in ls.iterrows():
+#             acmv_str = row.iloc[1]
+#             d3_str = row.iloc[i+2]
+#             print("acmv_str is", acmv_str)
+#             print("d3_str is", d3_str)
+#             prefix = ls.columns[i+2].strip()
+
+#             #end of file
+#             if pd.isna(d3_str) and pd.isna(acmv_str):
+#                 break
+            
+#             #error check for d3_line empty
+#             if pd.isna(d3_str):
+#                 filtered_acmv = filter_df(acmv_df, acmv_str)
+#                 updated_acmv_df = empty(filtered_acmv, prefix)
+#                 temp_acmv.append(updated_acmv_df)
+#                 continue
+
+#             elif pd.isna(acmv_str):
+#                 print("HEADER COMPARISON ACMV VALUE MISSING")
+#                 continue
+
+#             filtered_acmv = filter_df(acmv_df, acmv_str)
+#             filtered_d3 = filter_df(d3_df, d3_str)
+#             # Perform the matching between the filtered DataFrames
+#             updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
+#             updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
+#             temp_copied.append(d3_extras)
+#             temp_acmv.append(updated_acmv_df)
+            
+
+#         #excess files for when d3>acmv
+#         d3_additional = pd.concat(temp_copied, ignore_index=True)
+#         with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a') as writer:
+#             d3_additional.to_excel(writer, sheet_name=f"SOR {i+1} Additionals", index=False)
+#         final = pd.concat(temp_acmv, ignore_index=True)
+#         #concat db if not first
+#         if i == 0:
+#             database = final
+#         else: 
+#             database = pd.concat([database, final],axis=1)
+    
+#     with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+#         database = reorder(database)
+#         database.to_excel(writer, sheet_name="ACMV", index=False)
+        
+# def color_check_cells(file_path="output.xlsx"):
+
+#     wb = load_workbook(file_path)
+
+#     if 'Sheet1' in wb.sheetnames:
+#         # Remove the sheet called 'Sheet1'
+#         sheet_to_remove = wb['Sheet1']
+#         wb.remove(sheet_to_remove)
+#     sheet_names = wb.sheetnames
+#     last_sheet = wb[sheet_names[-1]]  # Last sheet
+#     wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(last_sheet))) 
+
+#     if "ACMV" not in wb.sheetnames:
+#         print("ACMV sheet not found in workbook")
+#         return
+#     ws = wb["ACMV"]
+    
+#     # Identify all columns with headers containing "Check" (case-insensitive)
+#     check_columns = []
+#     for cell in ws[1]:
+#         if cell.value and "check" in str(cell.value).lower():
+#             check_columns.append(cell.column)
+    
+#     if not check_columns:
+#         print("No Check columns found in ACMV sheet")
+#         return
+
+#     # Define fill styles
+#     purple_fill = PatternFill("solid", fgColor="d6b6d6")  # For Score diff only
+#     blue_fill = PatternFill("solid", fgColor="b6c9d6")      # For Price diff only
+#     yellow_fill = PatternFill("solid", fgColor="f7f7be")    # For both Score and Price diffs
+#     remove_fill = PatternFill("solid", fgColor="92d050")              # To green fill
+    
+#     # Iterate over rows (starting from row 2, assuming row 1 is the header)
+#     for row in range(2, ws.max_row + 1):
+#         for col in check_columns:
+#             check_cell = ws.cell(row=row, column=col)
+#             if check_cell.value is not None:
+#                 text = str(check_cell.value).lower()
+                
+#                 # If "Too many ACMV" is present, remove fill
+#                 if "too many acmv" in text:
+#                     fill = remove_fill
+#                 else:
+#                     has_score = "score" in text
+#                     has_price = "price" in text
+#                     if has_score and has_price:
+#                         fill = yellow_fill
+#                     elif has_score:
+#                         fill = purple_fill
+#                     elif has_price:
+#                         fill = blue_fill
+
+#                 # Apply the fill to the check cell and the three cells immediately to its left (if available)
+#                 for c in range(max(1, col - 3), col + 1):
+#                     ws.cell(row=row, column=c).fill = fill
+                        
+#     wb.save(file_path)
+#############
 
 # Run the main process and then color cells as needed
 # main()
