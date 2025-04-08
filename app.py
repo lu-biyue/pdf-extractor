@@ -31,35 +31,69 @@ st.divider()
 
 # Upload Section
 uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
-if uploaded_file:
-    st.success("File uploaded. Running comparison...")
 
-# Save file before processing
-timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-filename = f"{timestamp}_{uploaded_file.name}"
+if uploaded_file is not None:
+    st.success("✅ File uploaded. Running comparison...")
 
-with open(filename, "wb") as f:
-    f.write(uploaded_file.read())
+    # Save file
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    filename = f"{timestamp}_{uploaded_file.name}"
 
-try:
-    main()
-    color_check_cells()
-    st.success("✅ Excel comparison completed!")
+    with open("acmv_final.xlsx", "wb") as f:
+        f.write(uploaded_file.read())
 
-    # Load final sheet from output file
-    df = pd.read_excel("output.xlsx", sheet_name="ACMV")
-    st.dataframe(df, use_container_width=True)
+    try:
+        main()
+        color_check_cells()
+        st.success("✅ Excel comparison completed!")
 
-    with open("output.xlsx", "rb") as file:
-        st.download_button(
-            label="📥 Download Result File",
-            data=file,
-            file_name="output.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        # Load and display results
+        df = pd.read_excel("output.xlsx", sheet_name="ACMV")
+        st.dataframe(df, use_container_width=True)
 
-except Exception as e:
-    st.error(f"⚠️ An error occurred: {e}")
+        with open("output.xlsx", "rb") as file:
+            st.download_button(
+                label="📥 Download Result File",
+                data=file,
+                file_name="output.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+    except Exception as e:
+        st.error(f"⚠️ An error occurred: {e}")
+else:
+    st.info("Please upload an Excel file to begin.")
+    
+# uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
+# if uploaded_file:
+#     st.success("File uploaded. Running comparison...")
+
+# # Save file before processing
+# timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+# filename = f"{timestamp}_{uploaded_file.name}"
+
+# with open(filename, "wb") as f:
+#     f.write(uploaded_file.read())
+
+# try:
+#     main()
+#     color_check_cells()
+#     st.success("✅ Excel comparison completed!")
+
+#     # Load final sheet from output file
+#     df = pd.read_excel("output.xlsx", sheet_name="ACMV")
+#     st.dataframe(df, use_container_width=True)
+
+#     with open("output.xlsx", "rb") as file:
+#         st.download_button(
+#             label="📥 Download Result File",
+#             data=file,
+#             file_name="output.xlsx",
+#             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+#         )
+
+# except Exception as e:
+#     st.error(f"⚠️ An error occurred: {e}")
     
         
     # # Process file
