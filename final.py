@@ -240,8 +240,8 @@ def main():
 
         for _, row in header_comparison.iterrows():
             try:
-                acmv_str = row.get(sor1_sheet)
-                d3_str = row.get(sheet_name)
+                acmv_str = row.iloc[1] if len(row) > 1 else None
+                d3_str = row[sheet_name] if sheet_name in row else None
 
                 if pd.isna(acmv_str) and pd.isna(d3_str):
                     break
