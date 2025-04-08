@@ -297,7 +297,7 @@ def color_check_cells(file_path="output.xlsx"):
     # Step 2: Move the last sheet to the front
     sheet_names = wb.sheetnames
     if sheet_names:
-        last_sheet = wb[sheetnames[-1]]
+        last_sheet = wb[wb.sheetnames[-1]] 
         wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(last_sheet)))
 
     # Step 3: Ensure "ACMV" exists
@@ -350,7 +350,6 @@ def color_check_cells(file_path="output.xlsx"):
 
     # Step 7: Save
     wb.save(file_path)
-    print("✅ Highlighting applied.")
     
 ##########
 # def main():
