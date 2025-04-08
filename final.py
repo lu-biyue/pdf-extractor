@@ -233,7 +233,7 @@ def main():
         prefix = match.group(1) if match else sheet_name
 
         for _, row in ls.iterrows():
-            acmv_str = row.iloc[1]
+            acmv_str = row.iloc[1] if len(row) > 1 else None
             d3_str = row.get(sheet_name)
 
             if pd.isna(d3_str) and pd.isna(acmv_str):
