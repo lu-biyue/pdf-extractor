@@ -26,14 +26,6 @@ st.info(
     """,
     icon="🎯",
 )
-# # Logo + Title
-# col1, col2 = st.columns([1, 8])
-# with col1:
-#     st.image("https://cdn-icons-png.flaticon.com/512/124/124837.png", width=70)
-# with col2:
-#     st.title("PDF to Excel Converter")
-
-# st.caption("Convert structured PDFs into clean Excel files with a single click! 🎯")
 
 st.divider()
 
@@ -42,21 +34,32 @@ uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "x
 if uploaded_file:
     st.success("File uploaded. Running comparison...")
 
+    # Save file before processing
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    filename = f"{timestamp}_{uploaded_file.name}"
+    with open("acmv_final.xlsx", "wb") as f:
+        f.write(uploaded_file.read())
+
     try:
         main()
         color_check_cells()
         st.success("✅ Excel comparison completed!")
 
+        # Offer download of the output
+        with open("output.xlsx", "rb") as file:
+            st.download_button(
+                label="📥 Download Result File",
+                data=file,
+                file_name="output.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
-    # Save file
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = f"{timestamp}_{uploaded_file.name}"
-    with open(filename, "wb") as f:
-        f.write(uploaded_file.read())
-
-    # Process file
-    with st.spinner("🔍 Extracting data..."):
-        df = extract_structured_items_from_pdf(filename)
+    except Exception as e:
+        st.error(f"⚠️ An error occurred: {e}")
+        
+    # # Process file
+    # with st.spinner("🔍 Extracting data..."):
+    #     df = extract_structured_items_from_pdf(filename)
 
     # Preview
     st.subheader("📋 Preview Extracted Data")
