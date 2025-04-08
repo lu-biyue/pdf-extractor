@@ -61,6 +61,13 @@ if uploaded_file is not None:
 
     except Exception as e:
         st.error(f"⚠️ An error occurred: {e}")
+
+    # Clear/reset
+    if st.button("🔁 Clear File"):
+        st.experimental_rerun()
+
+else:
+    st.info("Please upload an Excel to begin.")
     
 # uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
 # if uploaded_file:
@@ -113,13 +120,6 @@ if uploaded_file is not None:
     #     file_name=f"{timestamp}_output.xlsx",
     #     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     # )
-
-    # Optional clear/reset
-    if st.button("🔁 Clear File"):
-        st.experimental_rerun()
-
-else:
-    st.info("Please upload an Excel to begin.")
     
 # import streamlit as st
 # import os
