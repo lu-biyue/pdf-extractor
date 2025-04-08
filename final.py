@@ -201,62 +201,66 @@ def empty(acmv_df, prefix):
     return acmv_df
 
 
-
-import pandas as pd
-import re
-
 def main():
     input = "acmv_final.xlsx"
     output = "output.xlsx"
     log_file = "debug_log.txt"
 
-    # Start fresh log
+    # Start fresh debug log
     with open(log_file, "w") as log:
         log.write("=== DEBUG LOG START ===\n")
 
-    def log_message(message):
-        print(message)
+    def log_message(msg):
+        print(msg)
         with open(log_file, "a") as log:
-            log.write(message + "\n")
+            log.write(msg + "\n")
 
-    # Create an empty workbook
-    pd.DataFrame().to_excel(output, sheet_name="Sheet1", index=False)
-    all_sheets = pd.ExcelFile(input).sheet_names
+    # Step 1: Map cleaned sheet names to actual names
+    original_sheets = pd.ExcelFile(input).sheet_names
+    sheet_map = {s.strip(): s for s in original_sheets}
+    all_sheets = list(sheet_map.keys())
 
-    base_sheet = next((s for s in all_sheets if re.match(r"INPUT\s*1\s*\(.*?\)", s, re.IGNORECASE)), None)
-    if not base_sheet:
-        log_message("❌ Could not find base sheet like 'INPUT 1 (...)'")
+    # Step 2: Detect base sheet like 'INPUT 1 (...)'
+    base_key = next((s for s in all_sheets if re.match(r"INPUT\s*1\s*\(.*?\)", s, re.IGNORECASE)), None)
+    if not base_key:
+        log_message("❌ Base sheet not found")
         return
+    base_sheet = sheet_map[base_key]
     acmv_df = pd.read_excel(input, sheet_name=base_sheet)
 
-    header_sheet = next((s for s in all_sheets if "HEADER" in s.upper()), "HEADER COMPARISON")
-    header_comparison = pd.read_excel(input, sheet_name=header_sheet)
+    # Step 3: Load HEADER COMPARISON
+    header_key = next((s for s in all_sheets if "HEADER" in s.upper()), "HEADER COMPARISON")
+    header_df = pd.read_excel(input, sheet_name=sheet_map.get(header_key, header_key))
 
-    comparison_sheets = [s for s in all_sheets if re.match(r"SOR\s*\d+\s*\(.*?\)", s, re.IGNORECASE)]
+    # Step 4: Find all comparison sheets like 'SOR X (YYY)'
+    comparison_keys = [s for s in all_sheets if re.match(r"SOR\s*\d+\s*\(.*?\)", s, re.IGNORECASE)]
 
     database = pd.DataFrame()
 
-    for sheet_name in comparison_sheets:
-        if sheet_name not in header_comparison.columns:
-            log_message(f"⚠️ Skipping {sheet_name} — not in HEADER COMPARISON")
+    for sheet_key in comparison_keys:
+        sheet_name = sheet_map[sheet_key]
+        if sheet_key not in header_df.columns:
+            log_message(f"⚠️ Skipping '{sheet_key}' — not in HEADER COMPARISON")
             continue
 
         temp_acmv = []
         temp_copied = []
 
         d3_df = pd.read_excel(input, sheet_name=sheet_name)
-        match = re.search(r"\((.*?)\)", sheet_name)
-        prefix = match.group(1) if match else sheet_name
 
-        for idx, row in header_comparison.iterrows():
+        # Extract label from (PROPEL), (MOE), etc.
+        match = re.search(r"\((.*?)\)", sheet_key)
+        prefix = match.group(1) if match else sheet_key
+
+        for idx, row in header_df.iterrows():
             try:
-                log_message(f"\n🔍 Processing row {idx}: len={len(row)} | values={row.values}")
+                log_message(f"\n🔍 Row {idx}: len={len(row)} | values={row.values}")
 
-                if row.isnull().all() or base_sheet not in row or sheet_name not in row:
+                if row.isnull().all() or base_key not in row or sheet_key not in row:
                     continue
 
-                acmv_str = row[base_sheet]
-                d3_str = row[sheet_name]
+                acmv_str = row[base_key]
+                d3_str = row[sheet_key]
 
                 if pd.isna(acmv_str) and pd.isna(d3_str):
                     break
@@ -278,14 +282,14 @@ def main():
                 temp_copied.append(d3_extras)
 
             except Exception as e:
-                log_message(f"❌ ERROR at row {idx}: {e}")
+                log_message(f"❌ ERROR in row {idx}: {e}")
                 log_message(f"➡️ Row content: {row.values}")
                 continue
 
         if temp_copied:
             d3_additional = pd.concat(temp_copied, ignore_index=True)
             with pd.ExcelWriter(output, engine="openpyxl", mode="a") as writer:
-                d3_additional.to_excel(writer, sheet_name=f"{sheet_name} Additionals", index=False)
+                d3_additional.to_excel(writer, sheet_name=f"{sheet_key} Additionals", index=False)
 
         if temp_acmv:
             final = pd.concat(temp_acmv, ignore_index=True)
