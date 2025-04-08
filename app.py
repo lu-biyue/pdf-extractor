@@ -62,7 +62,8 @@ if uploaded_file:
     try:
         main()
         color_check_cells()
-        st.success("✅ Excel comparison completed!")
+        # st.success("✅ Excel comparison completed!")
+        status_msg.success("✅ Excel comparison completed!")
 
         # Load and display results
         df = pd.read_excel("output.xlsx", sheet_name="ACMV")
@@ -79,9 +80,9 @@ if uploaded_file:
     except Exception as e:
         st.error(f"⚠️ An error occurred: {e}")
 
-    # Clear/reset
-    if st.button("🔁 Clear File"):
-        st.rerun()
+    # # Clear/reset
+    # if st.button("🔁 Clear File"):
+    #     st.rerun()
 
 else:
     st.info("Please upload an Excel to begin.")
