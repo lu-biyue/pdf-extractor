@@ -200,10 +200,14 @@ def empty(acmv_df, prefix):
     #acmv_df["Clean"] = None
     return acmv_df
 
-
+uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
+if uploaded_file:
+    input = "acmv_final.xlsx"
+    with open(input, "wb") as f:
+        f.write(uploaded_file.read())
+    main()
 
 def main():
-    input = "Cleaned_Input_Files (1).xlsx"
     output = "output.xlsx"
 
     # Step 1: Initialize output Excel
@@ -411,7 +415,6 @@ def color_check_cells(file_path="output.xlsx"):
                     ws.cell(row=row, column=c).fill = fill
                         
     wb.save(file_path)
-
 
 
 # Run the main process and then color cells as needed
