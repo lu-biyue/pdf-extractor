@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 from datetime import datetime
-from sor_converter import extract_structured_items_from_pdf  # Your custom function
+import shutil
+from final import main, color_check_cells
 
 # Page configuration
 st.set_page_config(
@@ -39,7 +40,13 @@ st.divider()
 # Upload Section
 uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
 if uploaded_file:
-    st.success("✅ Excel uploaded successfully")
+    st.success("File uploaded. Running comparison...")
+
+    try:
+        main()
+        color_check_cells()
+        st.success("✅ Excel comparison completed!")
+
 
     # Save file
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
