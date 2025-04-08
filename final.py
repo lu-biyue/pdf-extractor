@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 from fuzzywuzzy import fuzz, process
 import difflib
 from collections import defaultdict
@@ -199,194 +200,86 @@ def empty(acmv_df, prefix):
     #acmv_df["Clean"] = None
     return acmv_df
 
+
 def main():
     input = "acmv_final.xlsx"
     file_path = "output.xlsx"
 
-    # Initialize empty Excel file
-    pd.DataFrame().to_excel(file_path, sheet_name='Sheet1', index=False)
+    # Step 1: Initialize blank Excel file
+    pd.DataFrame().to_excel(file_path, sheet_name="Sheet1", index=False)
 
-    # Load all sheet names
+    # Step 2: Load all sheet names
     all_sheets = pd.ExcelFile(input).sheet_names
 
-    # Find base and comparison sheets
-    sor1_sheet = next((s for s in all_sheets if s.startswith("SOR 1")), None)
-    sor_comparison_sheets = [s for s in all_sheets if s.startswith("SOR ") and not s.startswith("SOR 1")]
+    # Step 3: Detect SOR 1 (...) as base, others as comparisons
+    sor1_sheet = next((s for s in all_sheets if re.match(r"SOR\s*1\s*\(.*\)", s)), None)
+    sor_comparison_sheets = [s for s in all_sheets if re.match(r"SOR\s*\d+\s*\(.*\)", s) and s != sor1_sheet]
 
-    # Load base and header sheets
+    if sor1_sheet is None:
+        print("❌ Error: Could not find a base sheet like 'SOR 1 (ACMV)'")
+        return
+
+    # Step 4: Load sheets
     acmv_df = pd.read_excel(input, sheet_name=sor1_sheet)
-    ls = pd.read_excel(input, sheet_name='HEADER COMPARISON')
+    header_comparison = pd.read_excel(input, sheet_name="HEADER COMPARISON")
 
     database = pd.DataFrame()
 
     for sheet_name in sor_comparison_sheets:
-        if sheet_name not in ls.columns:
-            continue  # Skip if the column is not in HEADER COMPARISON
+        if sheet_name not in header_comparison.columns:
+            continue  # skip if the sheet is not referenced in HEADER COMPARISON
 
         temp_acmv = []
         temp_copied = []
 
         d3_df = pd.read_excel(input, sheet_name=sheet_name)
 
-        # Optional: extract label from "(XYZ)" in sheet name
+        # Extract prefix from sheet (e.g., "PROPEL" from "SOR 2 (PROPEL)")
         match = re.search(r"\((.*?)\)", sheet_name)
         prefix = match.group(1) if match else sheet_name
 
-        for _, row in ls.iterrows():
-            acmv_str = row.iloc[1] if len(row) > 1 else None
-            d3_str = row.get(sheet_name)
+        for _, row in header_comparison.iterrows():
+            try:
+                acmv_str = row.get(sor1_sheet)
+                d3_str = row.get(sheet_name)
 
-            if pd.isna(d3_str) and pd.isna(acmv_str):
-                break
-            elif pd.isna(d3_str):
+                if pd.isna(acmv_str) and pd.isna(d3_str):
+                    break
+                elif pd.isna(d3_str):
+                    filtered_acmv = filter_df(acmv_df, acmv_str)
+                    updated_acmv_df = empty(filtered_acmv, prefix)
+                    temp_acmv.append(updated_acmv_df)
+                    continue
+                elif pd.isna(acmv_str):
+                    continue
+
                 filtered_acmv = filter_df(acmv_df, acmv_str)
-                updated_acmv_df = empty(filtered_acmv, prefix)
+                filtered_d3 = filter_df(d3_df, d3_str)
+
+                updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
+                updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
+
                 temp_acmv.append(updated_acmv_df)
+                temp_copied.append(d3_extras)
+
+            except Exception as e:
+                print(f"⚠️ Error in row: {e}")
                 continue
-            elif pd.isna(acmv_str):
-                continue
 
-            filtered_acmv = filter_df(acmv_df, acmv_str)
-            filtered_d3 = filter_df(d3_df, d3_str)
-
-            updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
-            updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
-
-            temp_acmv.append(updated_acmv_df)
-            temp_copied.append(d3_extras)
-
-        # Save unmatched extras
+        # Save unmatched SOR items
         d3_additional = pd.concat(temp_copied, ignore_index=True)
-        with pd.ExcelWriter(file_path, engine='openpyxl', mode='a') as writer:
+        with pd.ExcelWriter(file_path, engine="openpyxl", mode="a") as writer:
             d3_additional.to_excel(writer, sheet_name=f"{sheet_name} Additionals", index=False)
 
-        # Combine matched data
         final = pd.concat(temp_acmv, ignore_index=True)
         database = final if database.empty else pd.concat([database, final], axis=1)
 
-    # Reorder and save final ACMV sheet
-    with pd.ExcelWriter(file_path, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+    # Final reorder and save
+    with pd.ExcelWriter(file_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
         database = reorder(database)
         database.to_excel(writer, sheet_name="ACMV", index=False)
         
-# def main():
-#     #output file
-#     file_path = 'output.xlsx'
-#     #initialise excel sheet
-#     hello = pd.DataFrame()
-#     with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
-#         hello.to_excel(writer, sheet_name='Sheet1', index=False)
 
-#     database = pd.DataFrame()
-
-#     #BASE FILE (input)
-#     input = "acmv_final.xlsx"
-#     # acmv_df = pd.read_excel(input, sheet_name='INPUT 1 (ACMV)')
-#     # Use this to dynamically find the "SOR 1" sheet:
-#     all_sheets = pd.ExcelFile(input).sheet_names
-#     sor1_sheet = next((s for s in all_sheets if s.startswith("SOR 1")), None)
-#     acmv_df = pd.read_excel(input, sheet_name=sor1_sheet)
-    
-#     #HEADER COMPARISON
-#     ls = pd.read_excel(input, sheet_name='HEADER COMPARISON')
-
-#     # for i in range(ls.shape[1]-2):
-#     #     temp_acmv = []
-#     #     temp_copied = []
-#     #     if not "INPUT" in ls.columns[i+2]:
-#     #         continue
-    
-#         # d3_df = pd.read_excel(input, sheet_name=ls.columns[i+2].strip())
-#         # for index, row in ls.iterrows():
-#         #     acmv_str = row.iloc[1]
-#         #     d3_str = row.iloc[i+2]
-#         #     print("acmv_str is", acmv_str)
-#         #     print("d3_str is", d3_str)
-#         #     prefix = ls.columns[i+2].strip()
-
-#         #     #end of file
-#         #     if pd.isna(d3_str) and pd.isna(acmv_str):
-#         #         break
-            
-#         #     #error check for d3_line empty
-#         #     if pd.isna(d3_str):
-#         #         filtered_acmv = filter_df(acmv_df, acmv_str)
-#         #         updated_acmv_df = empty(filtered_acmv, prefix)
-#         #         temp_acmv.append(updated_acmv_df)
-#         #         continue
-
-#         #     elif pd.isna(acmv_str):
-#         #         print("HEADER COMPARISON ACMV VALUE MISSING")
-#         #         continue
-
-#         #     filtered_acmv = filter_df(acmv_df, acmv_str)
-#         #     filtered_d3 = filter_df(d3_df, d3_str)
-#         #     # Perform the matching between the filtered DataFrames
-#         #     updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
-#         #     updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
-#         #     temp_copied.append(d3_extras)
-#         #     temp_acmv.append(updated_acmv_df)
-            
-
-#         # #excess files for when d3>acmv
-#         # d3_additional = pd.concat(temp_copied, ignore_index=True)
-#         # with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a') as writer:
-#         #     d3_additional.to_excel(writer, sheet_name=f"SOR {i+1} Additionals", index=False)
-#         # final = pd.concat(temp_acmv, ignore_index=True)
-#         # #concat db if not first
-#         # if i == 0:
-#         #     database = final
-#         # else: 
-#         #     database = pd.concat([database, final],axis=1)
-
-#     # Get all relevant SOR sheets except "SOR 1"
-#     sor_comparison_sheets = [s for s in all_sheets if s.startswith("SOR ") and not s.startswith("SOR 1")]
-
-#     for sheet_name in sor_comparison_sheets:
-#         if sheet_name not in ls.columns:
-#             continue  # Skip if the column does not exist in HEADER COMPARISON
-    
-#         temp_acmv = []
-#         temp_copied = []
-#         d3_df = pd.read_excel(input, sheet_name=sheet_name)
-#         prefix = sheet_name
-
-#         for index, row in ls.iterrows():
-#             acmv_str = row.iloc[1]
-#             d3_str = row[sheet_name]  # Match sheet name to column
-    
-#             if pd.isna(d3_str) and pd.isna(acmv_str):
-#                 break
-#             elif pd.isna(d3_str):
-#                 filtered_acmv = filter_df(acmv_df, acmv_str)
-#                 updated_acmv_df = empty(filtered_acmv, prefix)
-#                 temp_acmv.append(updated_acmv_df)
-#                 continue
-#             elif pd.isna(acmv_str):
-#                 continue
-    
-#             filtered_acmv = filter_df(acmv_df, acmv_str)
-#             filtered_d3 = filter_df(d3_df, d3_str)
-    
-#             updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
-#             updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
-    
-#             temp_copied.append(d3_extras)
-#             temp_acmv.append(updated_acmv_df)
-
-#     d3_additional = pd.concat(temp_copied, ignore_index=True)
-#     with pd.ExcelWriter(file_path, engine='openpyxl', mode='a') as writer:
-#         d3_additional.to_excel(writer, sheet_name=f"{sheet_name} Additionals", index=False)
-
-#     final = pd.concat(temp_acmv, ignore_index=True)
-#     database = final if database.empty else pd.concat([database, final], axis=1)
-
-#         ##########
-
-#    # ✅ Final reorder and write ACMV only once, after loop   
-# with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-#     database = reorder(database)
-#     database.to_excel(writer, sheet_name="ACMV", index=False)
         
 def color_check_cells(file_path="output.xlsx"):
 
