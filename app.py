@@ -27,6 +27,19 @@ st.info(
     icon="🎯",
 )
 
+with st.expander("ℹ️ How to use this app"):
+    st.markdown("""
+    **Step 1:** Upload your Excel file using the file uploader above.  
+    **Step 2:** Wait for the app to process and extract the data.  
+    **Step 3:** Preview the extracted or compared data on the screen.  
+    **Step 4:** Click the download button to save the final Excel output.  
+    **Step 5:** (Optional) Click "Clear File" to reset and upload a new file.
+    """)
+
+with st.expander("📺 Watch how to use this app"):
+    st.markdown("Here’s a quick walkthrough video:")
+    st.video("https://youtu.be/MnrJzXM7a6o?si=Q0aCB4s4OAfeZXHY")
+    
 st.divider()
 
 # Upload Section
