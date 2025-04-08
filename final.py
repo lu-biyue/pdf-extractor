@@ -201,6 +201,9 @@ def empty(acmv_df, prefix):
     return acmv_df
 
 
+import pandas as pd
+import re
+
 def main():
     input = "acmv_final.xlsx"
     output = "output.xlsx"
@@ -231,16 +234,20 @@ def main():
 
         d3_df = pd.read_excel(input, sheet_name=sheet_name)
 
-        # Extract prefix (e.g., "PROPEL" from "SOR 2 (PROPEL)")
+        # Extract label from parentheses
         match = re.search(r"\((.*?)\)", sheet_name)
         prefix = match.group(1) if match else sheet_name
 
         for idx, row in header_comparison.iterrows():
             try:
-                if row.isnull().all() or len(row) < 2:
+                # Debug print
+                # print(f"🔍 Row {idx}: {row.values}")
+
+                # Skip rows that are entirely empty or too short
+                if row.isnull().all() or row.size <= 1:
                     continue
 
-                acmv_str = row.iloc[1]  # Typically the 'SOR 1' column
+                acmv_str = row.iloc[1]
                 d3_str = row[sheet_name] if sheet_name in row else None
 
                 if pd.isna(acmv_str) and pd.isna(d3_str):
@@ -266,6 +273,7 @@ def main():
                 print(f"⚠️ Row {idx} caused error: {e}")
                 continue
 
+        # Save unmatched SOR entries
         d3_additional = pd.concat(temp_copied, ignore_index=True)
         with pd.ExcelWriter(output, engine="openpyxl", mode="a") as writer:
             d3_additional.to_excel(writer, sheet_name=f"{sheet_name} Additionals", index=False)
