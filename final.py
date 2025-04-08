@@ -305,7 +305,7 @@ def main():
             # acmv_str = row.iloc[1]
             # d3_str = row.iloc[i+2]
             acmv_str = row.iloc[1] if len(row) > 1 else None
-            d3_str = row[sheet_name] if sheet_name in row else None
+            d3_str = row.iloc[i+2] if sheet_name in row else None
             print("acmv_str is", acmv_str)
             print("d3_str is", d3_str)
             prefix = ls.columns[i+2].strip()
