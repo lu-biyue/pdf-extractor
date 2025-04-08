@@ -292,12 +292,7 @@ def color_check_cells(file_path="output.xlsx"):
     #     print("ACMV sheet not found in workbook")
     #     return
     # ws = wb["ACMV"]
-    acmv_sheet_name = get_acmv_sheet_name(file_path)
 
-    if acmv_sheet_name not in wb.sheetnames:
-        print(f"'{acmv_sheet_name}' sheet not found in workbook")
-        return
-    ws = wb[acmv_sheet_name]
     
     # Identify all columns with headers containing "Check" (case-insensitive)
     check_columns = []
