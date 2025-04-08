@@ -61,8 +61,8 @@ if uploaded_file is not None:
 
     except Exception as e:
         st.error(f"⚠️ An error occurred: {e}")
-else:
-    st.info("Please upload an Excel file to begin.")
+# else:
+#     st.info("Please upload an Excel file to begin.")
     
 # uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
 # if uploaded_file:
