@@ -201,8 +201,6 @@ def empty(acmv_df, prefix):
     return acmv_df
 
 
-import pandas as pd
-import re
 
 def main():
     input = "acmv_final.xlsx"
@@ -240,10 +238,6 @@ def main():
 
         for idx, row in header_comparison.iterrows():
             try:
-                # Debug print
-                # print(f"🔍 Row {idx}: {row.values}")
-
-                # Skip rows that are entirely empty or too short
                 if row.isnull().all() or row.size <= 1:
                     continue
 
@@ -273,18 +267,21 @@ def main():
                 print(f"⚠️ Row {idx} caused error: {e}")
                 continue
 
-        # Save unmatched SOR entries
-        d3_additional = pd.concat(temp_copied, ignore_index=True)
-        with pd.ExcelWriter(output, engine="openpyxl", mode="a") as writer:
-            d3_additional.to_excel(writer, sheet_name=f"{sheet_name} Additionals", index=False)
+        # Only save if there's anything to save
+        if temp_copied:
+            d3_additional = pd.concat(temp_copied, ignore_index=True)
+            with pd.ExcelWriter(output, engine="openpyxl", mode="a") as writer:
+                d3_additional.to_excel(writer, sheet_name=f"{sheet_name} Additionals", index=False)
 
-        final = pd.concat(temp_acmv, ignore_index=True)
-        database = final if database.empty else pd.concat([database, final], axis=1)
+        if temp_acmv:
+            final = pd.concat(temp_acmv, ignore_index=True)
+            database = final if database.empty else pd.concat([database, final], axis=1)
 
     # Final reorder and save
-    with pd.ExcelWriter(output, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-        database = reorder(database)
-        database.to_excel(writer, sheet_name="ACMV", index=False)
+    if not database.empty:
+        with pd.ExcelWriter(output, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+            database = reorder(database)
+            database.to_excel(writer, sheet_name="ACMV", index=False)
 
 #####################
 # def main():
