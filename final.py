@@ -199,8 +199,7 @@ def empty(acmv_df, prefix):
     acmv_df['Score'] = None
     #acmv_df["Clean"] = None
     return acmv_df
-        
-##########
+
 def main():
     #output file
     file_path = 'output.xlsx'
@@ -224,9 +223,7 @@ def main():
             continue
         d3_df = pd.read_excel(input, sheet_name=ls.columns[i+2].strip())
         for index, row in ls.iterrows():
-            # acmv_str = row.iloc[1]
-            # d3_str = row.iloc[i+2]
-            acmv_str = row.iloc[1] if len(row) > 1 else None
+            acmv_str = row.iloc[1]
             d3_str = row.iloc[i+2]
             print("acmv_str is", acmv_str)
             print("d3_str is", d3_str)
@@ -267,14 +264,9 @@ def main():
         else: 
             database = pd.concat([database, final],axis=1)
     
-    # with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-    #     database = reorder(database)
-    #     database.to_excel(writer, sheet_name="ACMV", index=False)
-    acmv_sheet_name = get_acmv_sheet_name(input)
     with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
         database = reorder(database)
-        database.to_excel(writer, sheet_name=acmv_sheet_name, index=False)
-##########
+        database.to_excel(writer, sheet_name="ACMV", index=False)
         
 def color_check_cells(file_path="output.xlsx"):
 
@@ -288,11 +280,10 @@ def color_check_cells(file_path="output.xlsx"):
     last_sheet = wb[sheet_names[-1]]  # Last sheet
     wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(last_sheet))) 
 
-    # if "ACMV" not in wb.sheetnames:
-    #     print("ACMV sheet not found in workbook")
-    #     return
-    # ws = wb["ACMV"]
-
+    if "ACMV" not in wb.sheetnames:
+        print("ACMV sheet not found in workbook")
+        return
+    ws = wb["ACMV"]
     
     # Identify all columns with headers containing "Check" (case-insensitive)
     check_columns = []
