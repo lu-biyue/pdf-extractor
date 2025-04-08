@@ -218,7 +218,7 @@ def main():
     for i in range(ls.shape[1]-2):
         temp_acmv = []
         temp_copied = []
-        if not "INPUT" in ls.columns[i+2]:
+        if not "SOR" in ls.columns[i+2]:
             continue
         d3_df = pd.read_excel(input, sheet_name=ls.columns[i+2].strip())
         for index, row in ls.iterrows():
