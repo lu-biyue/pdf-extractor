@@ -211,14 +211,14 @@ def main():
 
     #BASE FILE (input)
     input = "acmv_final.xlsx"
-    acmv_df = pd.read_excel(input, sheet_name='SOR 1 (ACMV)')
+    acmv_df = pd.read_excel(input, sheet_name='INPUT 1 (ACMV)')
     #HEADER COMPARISON
     ls = pd.read_excel(input, sheet_name='HEADER COMPARISON')
 
     for i in range(ls.shape[1]-2):
         temp_acmv = []
         temp_copied = []
-        if not "SOR" in ls.columns[i+2]:
+        if not "INPUT" in ls.columns[i+2]:
             continue
         d3_df = pd.read_excel(input, sheet_name=ls.columns[i+2].strip())
         for index, row in ls.iterrows():
