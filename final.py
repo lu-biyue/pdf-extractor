@@ -243,14 +243,12 @@ def main():
 
         for idx, row in header_comparison.iterrows():
             try:
-                # Skip empty rows or those with insufficient data
-                if row.isnull().all() or len(row) <= 1:
+                if row.isnull().all() or base_sheet not in row or sheet_name not in row:
                     continue
-
-                # Check for index safety
-                acmv_str = row.iloc[1] if len(row) > 1 else None
-                d3_str = row[sheet_name] if sheet_name in row else None
-
+        
+                acmv_str = row[base_sheet]
+                d3_str = row[sheet_name]
+        
                 if pd.isna(acmv_str) and pd.isna(d3_str):
                     break
                 elif pd.isna(d3_str):
@@ -260,16 +258,16 @@ def main():
                     continue
                 elif pd.isna(acmv_str):
                     continue
-
+        
                 filtered_acmv = filter_df(acmv_df, acmv_str)
                 filtered_d3 = filter_df(d3_df, d3_str)
-
+        
                 updated_acmv_df, copied_d3 = compare(filtered_acmv, filtered_d3, prefix)
                 updated_acmv_df, d3_extras = check(updated_acmv_df, filtered_acmv, filtered_d3, copied_d3, prefix)
-
+        
                 temp_acmv.append(updated_acmv_df)
                 temp_copied.append(d3_extras)
-
+        
             except Exception as e:
                 print(f"⚠️ Row {idx} error: {e}\n➡️ Row content: {row.values}")
                 continue
