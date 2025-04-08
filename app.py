@@ -41,22 +41,26 @@ filename = f"{timestamp}_{uploaded_file.name}"
 with open(filename, "wb") as f:
     f.write(uploaded_file.read())
 
-    try:
-        main()
-        color_check_cells()
-        st.success("✅ Excel comparison completed!")
+try:
+    main()
+    color_check_cells()
+    st.success("✅ Excel comparison completed!")
 
-        # Offer download of the output
-        with open("output.xlsx", "rb") as file:
-            st.download_button(
-                label="📥 Download Result File",
-                data=file,
-                file_name="output.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+    # Load final sheet from output file
+    df = pd.read_excel("output.xlsx", sheet_name="ACMV")
+    st.dataframe(df, use_container_width=True)
 
-    except Exception as e:
-        st.error(f"⚠️ An error occurred: {e}")
+    with open("output.xlsx", "rb") as file:
+        st.download_button(
+            label="📥 Download Result File",
+            data=file,
+            file_name="output.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+except Exception as e:
+    st.error(f"⚠️ An error occurred: {e}")
+    
         
     # # Process file
     # with st.spinner("🔍 Extracting data..."):
