@@ -284,54 +284,61 @@ def main():
             database = reorder(database)
             database.to_excel(writer, sheet_name="ACMV", index=False)
 
-from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
 
 def color_check_cells(file_path="output.xlsx"):
     wb = load_workbook(file_path)
 
-    # Step 1: Remove default sheet if it exists
+    # Step 1: Remove 'Sheet1' if it exists
     if 'Sheet1' in wb.sheetnames:
         wb.remove(wb['Sheet1'])
 
-    # Step 2: Move the last sheet to the front
-    sheet_names = wb.sheetnames
-    if sheet_names:
-        last_sheet = wb[wb.sheetnames[-1]] 
-        wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(last_sheet)))
-
-    # Step 3: Ensure "ACMV" exists
-    if "ACMV" not in wb.sheetnames:
-        print("❌ 'ACMV' sheet not found in workbook.")
+    # Step 2: Detect base sheet and extract NAME from 'INPUT 1 (NAME)'
+    base_sheet_name = next((s for s in wb.sheetnames if re.match(r"INPUT\s*1\s*\(.*?\)", s, re.IGNORECASE)), None)
+    if not base_sheet_name:
+        print("❌ Could not find a sheet like 'INPUT 1 (NAME)'")
         return
 
-    ws = wb["ACMV"]
+    # Extract NAME inside parentheses
+    match = re.search(r"\((.*?)\)", base_sheet_name)
+    extracted_name = match.group(1).strip() if match else None
+    if not extracted_name:
+        print("❌ Could not extract name from 'INPUT 1 (...)'")
+        return
 
-    # Step 4: Identify "Check" columns
+    # Step 3: Try to find sheet named exactly as the extracted name
+    target_sheet_name = next((s for s in wb.sheetnames if extracted_name.strip().lower() == s.strip().lower()), None)
+    if not target_sheet_name:
+        print(f"❌ Could not find sheet matching '{extracted_name}'")
+        print("Available sheets:", wb.sheetnames)
+        return
+
+    ws = wb[target_sheet_name]
+
+    # Step 4: Identify 'Check' columns
     check_columns = []
     for cell in ws[1]:
         if cell.value and "check" in str(cell.value).lower():
             check_columns.append(cell.column)
 
     if not check_columns:
-        print("⚠️ No 'Check' columns found in ACMV sheet.")
+        print("⚠️ No 'Check' columns found in sheet:", target_sheet_name)
         return
 
-    # Step 5: Define color styles
-    purple_fill = PatternFill("solid", fgColor="d6b6d6")   # Score diff only
-    blue_fill = PatternFill("solid", fgColor="b6c9d6")     # Price diff only
-    yellow_fill = PatternFill("solid", fgColor="f7f7be")   # Both
-    remove_fill = PatternFill("solid", fgColor="92d050")   # Too many ACMV
+    # Step 5: Define fill styles
+    purple_fill = PatternFill("solid", fgColor="d6b6d6")  # Score
+    blue_fill = PatternFill("solid", fgColor="b6c9d6")    # Price
+    yellow_fill = PatternFill("solid", fgColor="f7f7be")  # Both
+    green_fill = PatternFill("solid", fgColor="92d050")   # Too many ACMV
 
     # Step 6: Apply coloring
     for row in range(2, ws.max_row + 1):
         for col in check_columns:
-            check_cell = ws.cell(row=row, column=col)
-            if check_cell.value:
-                text = str(check_cell.value).lower()
+            cell = ws.cell(row=row, column=col)
+            if cell.value:
+                text = str(cell.value).lower()
 
                 if "too many acmv" in text:
-                    fill = remove_fill
+                    fill = green_fill
                 else:
                     has_score = "score" in text
                     has_price = "price" in text
@@ -342,14 +349,13 @@ def color_check_cells(file_path="output.xlsx"):
                     elif has_price:
                         fill = blue_fill
                     else:
-                        continue  # No recognized label
+                        continue  # Skip if not matched
 
-                # Color the Check cell + 3 cells to the left
                 for c in range(max(1, col - 3), col + 1):
                     ws.cell(row=row, column=c).fill = fill
 
-    # Step 7: Save
     wb.save(file_path)
+
     
 ##########
 # def main():
