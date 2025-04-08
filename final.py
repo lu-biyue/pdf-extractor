@@ -202,16 +202,30 @@ def empty(acmv_df, prefix):
 
 
 
+import pandas as pd
+import re
+
 def main():
     input = "acmv_final.xlsx"
     output = "output.xlsx"
+    log_file = "debug_log.txt"
 
+    # Start fresh log
+    with open(log_file, "w") as log:
+        log.write("=== DEBUG LOG START ===\n")
+
+    def log_message(message):
+        print(message)
+        with open(log_file, "a") as log:
+            log.write(message + "\n")
+
+    # Create an empty workbook
     pd.DataFrame().to_excel(output, sheet_name="Sheet1", index=False)
     all_sheets = pd.ExcelFile(input).sheet_names
 
     base_sheet = next((s for s in all_sheets if re.match(r"INPUT\s*1\s*\(.*?\)", s, re.IGNORECASE)), None)
     if not base_sheet:
-        print("❌ Could not find base sheet like 'INPUT 1 (...)'")
+        log_message("❌ Could not find base sheet like 'INPUT 1 (...)'")
         return
     acmv_df = pd.read_excel(input, sheet_name=base_sheet)
 
@@ -224,7 +238,7 @@ def main():
 
     for sheet_name in comparison_sheets:
         if sheet_name not in header_comparison.columns:
-            print(f"⚠️ Skipping {sheet_name} — not in HEADER COMPARISON")
+            log_message(f"⚠️ Skipping {sheet_name} — not in HEADER COMPARISON")
             continue
 
         temp_acmv = []
@@ -236,8 +250,7 @@ def main():
 
         for idx, row in header_comparison.iterrows():
             try:
-                # DEBUG: Check row structure
-                print(f"\n🔍 Processing row {idx}: len={len(row)} | values={row.values}")
+                log_message(f"\n🔍 Processing row {idx}: len={len(row)} | values={row.values}")
 
                 if row.isnull().all() or base_sheet not in row or sheet_name not in row:
                     continue
@@ -265,8 +278,8 @@ def main():
                 temp_copied.append(d3_extras)
 
             except Exception as e:
-                print(f"❌ ERROR at row {idx}: {e}")
-                print(f"➡️ Row content: {row.values}")
+                log_message(f"❌ ERROR at row {idx}: {e}")
+                log_message(f"➡️ Row content: {row.values}")
                 continue
 
         if temp_copied:
@@ -282,6 +295,10 @@ def main():
         with pd.ExcelWriter(output, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
             database = reorder(database)
             database.to_excel(writer, sheet_name="ACMV", index=False)
+
+    log_message("✅ Processing completed.")
+
+
 #####################
 # def main():
 #     #output file
