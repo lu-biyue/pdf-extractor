@@ -207,6 +207,7 @@ def main():
 
     # Step 1: Initialize blank output Excel
     pd.DataFrame().to_excel(output, sheet_name="Sheet1", index=False)
+    sheet_name = sheet_name.strip()
 
     # Step 2: Read all sheets in the file
     all_sheets = pd.ExcelFile(input).sheet_names
@@ -221,6 +222,7 @@ def main():
     # Step 4: Dynamically detect HEADER COMPARISON sheet
     header_sheet = next((s for s in all_sheets if "HEADER" in s.upper()), "HEADER COMPARISON")
     header_comparison = pd.read_excel(input, sheet_name=header_sheet)
+    header_comparison.columns = header_comparison.columns.str.strip()
 
     # Step 5: Find all comparison sheets that start with "SOR X (YYY)"
     comparison_sheets = [s for s in all_sheets if re.match(r"SOR\s*\d+\s*\(.*?\)", s, re.IGNORECASE)]
@@ -245,7 +247,7 @@ def main():
                 if row.isnull().all() or row.size <= 1:
                     continue
 
-                acmv_str = row.iloc[1]
+                acmv_str = row[base_sheet] if base_sheet in row else None
                 d3_str = row[sheet_name] if sheet_name in row else None
 
                 if pd.isna(acmv_str) and pd.isna(d3_str):
