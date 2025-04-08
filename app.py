@@ -64,7 +64,7 @@ if uploaded_file is not None:
 
     # Clear/reset
     if st.button("🔁 Clear File"):
-        st.experimental_rerun()
+        st.rerun()
 
 else:
     st.info("Please upload an Excel to begin.")
