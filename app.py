@@ -34,11 +34,12 @@ uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "x
 if uploaded_file:
     st.success("File uploaded. Running comparison...")
 
-    # Save file before processing
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = f"{timestamp}_{uploaded_file.name}"
-    with open("acmv_final.xlsx", "wb") as f:
-        f.write(uploaded_file.read())
+# Save file before processing
+timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+filename = f"{timestamp}_{uploaded_file.name}"
+
+with open(filename, "wb") as f:
+    f.write(uploaded_file.read())
 
     try:
         main()
