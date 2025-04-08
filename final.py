@@ -302,8 +302,10 @@ def main():
             continue
         d3_df = pd.read_excel(input, sheet_name=ls.columns[i+2].strip())
         for index, row in ls.iterrows():
-            acmv_str = row.iloc[1]
-            d3_str = row.iloc[i+2]
+            # acmv_str = row.iloc[1]
+            # d3_str = row.iloc[i+2]
+            acmv_str = row.iloc[1] if len(row) > 1 else None
+            d3_str = row[sheet_name] if sheet_name in row else None
             print("acmv_str is", acmv_str)
             print("d3_str is", d3_str)
             prefix = ls.columns[i+2].strip()
