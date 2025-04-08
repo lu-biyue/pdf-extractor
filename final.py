@@ -201,6 +201,7 @@ def empty(acmv_df, prefix):
     return acmv_df
 
 
+
 def main():
     input = "acmv_final.xlsx"
     output = "output.xlsx"
@@ -211,24 +212,25 @@ def main():
     # Step 2: Read all sheets in the file
     all_sheets = pd.ExcelFile(input).sheet_names
 
-    # Step 3: Dynamically detect base sheet ("INPUT 1 (ACMV)")
+    # Step 3: Detect base sheet (INPUT 1)
     base_sheet = next((s for s in all_sheets if re.match(r"INPUT\s*1\s*\(.*?\)", s, re.IGNORECASE)), None)
     if not base_sheet:
         print("❌ Could not find base sheet like 'INPUT 1 (...)'")
         return
     acmv_df = pd.read_excel(input, sheet_name=base_sheet)
 
-    # Step 4: Dynamically detect HEADER COMPARISON sheet
+    # Step 4: Detect HEADER COMPARISON sheet
     header_sheet = next((s for s in all_sheets if "HEADER" in s.upper()), "HEADER COMPARISON")
     header_comparison = pd.read_excel(input, sheet_name=header_sheet)
 
-    # Step 5: Find all comparison sheets that start with "SOR X (YYY)"
+    # Step 5: Detect SOR sheets
     comparison_sheets = [s for s in all_sheets if re.match(r"SOR\s*\d+\s*\(.*?\)", s, re.IGNORECASE)]
 
     database = pd.DataFrame()
 
     for sheet_name in comparison_sheets:
         if sheet_name not in header_comparison.columns:
+            print(f"⚠️ Skipping {sheet_name} — not in HEADER COMPARISON columns")
             continue
 
         temp_acmv = []
@@ -236,16 +238,17 @@ def main():
 
         d3_df = pd.read_excel(input, sheet_name=sheet_name)
 
-        # Extract prefix from (PROPEL), (MOE), etc.
         match = re.search(r"\((.*?)\)", sheet_name)
         prefix = match.group(1) if match else sheet_name
 
         for idx, row in header_comparison.iterrows():
             try:
-                if row.isnull().all() or row.size <= 1:
+                # Skip empty rows or those with insufficient data
+                if row.isnull().all() or len(row) <= 1:
                     continue
 
-                acmv_str = row.iloc[1]
+                # Check for index safety
+                acmv_str = row.iloc[1] if len(row) > 1 else None
                 d3_str = row[sheet_name] if sheet_name in row else None
 
                 if pd.isna(acmv_str) and pd.isna(d3_str):
@@ -268,7 +271,7 @@ def main():
                 temp_copied.append(d3_extras)
 
             except Exception as e:
-                print(f"⚠️ Row {idx} caused error: {e}")
+                print(f"⚠️ Row {idx} error: {e}\n➡️ Row content: {row.values}")
                 continue
 
         if temp_copied:
