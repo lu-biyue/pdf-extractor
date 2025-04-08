@@ -45,9 +45,13 @@ st.divider()
 # Upload Section
 uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
 
-if uploaded_file is not None:
-    st.success("✅ File uploaded. Running comparison...")
+# if uploaded_file is not None:
+#     st.success("✅ File uploaded. Running comparison...")
 
+if uploaded_file:
+    status_msg = st.empty()  # Create a placeholder for status updates
+    status_msg.success("✅ File uploaded. Running comparison...")
+    
     # Save file
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     filename = f"{timestamp}_{uploaded_file.name}"
