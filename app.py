@@ -36,7 +36,7 @@ with st.expander("ℹ️ How to use this app"):
     **Step 5:** (Optional) Click "Clear File" to reset and upload a new file.
     """)
 
-with st.expander("📺 Watch how to use this app"):
+with st.expander("📺 Watch a video tutorial here!"):
     st.markdown("Here’s a quick walkthrough video:")
     st.video("https://youtu.be/MnrJzXM7a6o?si=Q0aCB4s4OAfeZXHY")
     
