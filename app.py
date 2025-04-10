@@ -79,7 +79,7 @@ if uploaded_file:
             st.download_button(
                 label="📥 Download Result File",
                 data=file,
-                file_name="output_path",
+                file_name=output_path,
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
