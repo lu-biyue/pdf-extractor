@@ -6,12 +6,6 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from datetime import datetime
 
-# Function to return today's date in dd/mmm/yy format
-def get_today_date():
-    return datetime.today().strftime('%d_%b_%y')
-
-date = get_today_date()
-
 def common_prefix(strings):
     if not strings:
         return ""
@@ -340,7 +334,7 @@ def color_check_cells(file_path="output.xlsx"):
                         
     wb.save(file_path)
 
-from datetime import datetime
+
 
 # Function to return today's date in dd/mmm/yy format
 def get_today_date():
