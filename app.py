@@ -38,7 +38,7 @@ with st.expander("ℹ️ How to use this app"):
 
 with st.expander("📺 Watch a video tutorial here!"):
     st.markdown("Here’s a quick walkthrough video:")
-    st.video("https://youtu.be/MnrJzXM7a6o?si=Q0aCB4s4OAfeZXHY")
+    st.video("https://youtu.be/AlrC-XaKwew?si=67q-6vntMAeRUe7Z")
     
 st.divider()
 
