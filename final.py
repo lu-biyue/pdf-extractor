@@ -4,6 +4,13 @@ import difflib
 from collections import defaultdict
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
+from datetime import datetime
+
+# Function to return today's date in dd/mmm/yy format
+def get_today_date():
+    return datetime.today().strftime('%d_%b_%y')
+
+date = get_today_date()
 
 def common_prefix(strings):
     if not strings:
@@ -350,19 +357,11 @@ def copy_sheet(input, output):
             cleaned = remove_unnamed(df)
             cleaned.to_excel(writer, sheet_name=sheet_name, index=False)
 
+# Run the main process and then color cells as needed
 if __name__ == "__main__":
     input = 'acmv_final.xlsx'
-    output = f"ACMV_{date}.xlsx"
+    output = f"ACMV_{get_today_date()}.xlsx"
     main(input, output)
     color_check_cells(output)
     copy_sheet(input, output)
-
-
-# Run the main process and then color cells as needed
-# main()
-# color_check_cells()
-# if __name__ == "__main__":
-#     main()
-#     color_check_cells()
-#     copy_sheet()
 
