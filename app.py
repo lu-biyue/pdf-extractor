@@ -75,7 +75,7 @@ if uploaded_file:
         df = pd.read_excel("output.xlsx", sheet_name="ACMV")
         st.dataframe(df, use_container_width=True)
 
-        with open("output_path.xlsx", "rb") as file:
+        with open(output_path, "rb") as file:
             st.download_button(
                 label="📥 Download Result File",
                 data=file,
