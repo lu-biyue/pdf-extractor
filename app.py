@@ -56,13 +56,6 @@ if uploaded_file:
 
     with open(input_path, "wb") as f:
         f.write(uploaded_file.read())
-    
-    # # Save file
-    # timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    # filename = f"{timestamp}_{uploaded_file.name}"
-
-    # with open("acmv_final.xlsx", "wb") as f:
-    #     f.write(uploaded_file.read())
 
     try:
         main(input_path, output_path)
@@ -85,10 +78,6 @@ if uploaded_file:
 
     except Exception as e:
         st.error(f"⚠️ An error occurred: {e}")
-
-    # # Clear/reset
-    # if st.button("🔁 Clear File"):
-    #     st.rerun()
 
 else:
     st.info("Please upload an Excel to begin.")
