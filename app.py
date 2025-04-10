@@ -33,7 +33,6 @@ with st.expander("ℹ️ How to use this app"):
     **Step 2:** Wait for the app to process and extract the data.  
     **Step 3:** Preview the extracted or compared data on the screen.  
     **Step 4:** Click the download button to save the final Excel output.  
-    **Step 5:** (Optional) Click "Clear File" to reset and upload a new file.
     """)
 
 with st.expander("📺 Watch a video tutorial here!"):
