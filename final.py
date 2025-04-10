@@ -1,5 +1,4 @@
 import pandas as pd
-import re
 from fuzzywuzzy import fuzz, process
 import difflib
 from collections import defaultdict
@@ -200,34 +199,28 @@ def empty(acmv_df, prefix):
     #acmv_df["Clean"] = None
     return acmv_df
 
-######## TESTING ########
-
-
-
-
-
-####### ORIGINAL BELOW ########
-def main():
+def main(input, output):
     #output file
-    file_path = 'output.xlsx'
+    date = get_today_date()
     #initialise excel sheet
     hello = pd.DataFrame()
-    with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
         hello.to_excel(writer, sheet_name='Sheet1', index=False)
 
     database = pd.DataFrame()
 
     #BASE FILE (input)
-    input = "acmv_final.xlsx"
     acmv_df = pd.read_excel(input, sheet_name='INPUT 1 (ACMV)')
     #HEADER COMPARISON
     ls = pd.read_excel(input, sheet_name='HEADER COMPARISON')
-
+    
     for i in range(ls.shape[1]-2):
         temp_acmv = []
         temp_copied = []
-        if not "SOR" in ls.columns[i+2]:
+        if not "SOR" in ls.columns[i+2].upper():
+            print("In this Header Comparison file, there are no 'SORS' ")
             continue
+        #copy sheets
         d3_df = pd.read_excel(input, sheet_name=ls.columns[i+2].strip())
         for index, row in ls.iterrows():
             acmv_str = row.iloc[1]
@@ -259,10 +252,12 @@ def main():
             temp_copied.append(d3_extras)
             temp_acmv.append(updated_acmv_df)
             
-
         #excess files for when d3>acmv
         d3_additional = pd.concat(temp_copied, ignore_index=True)
-        with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a') as writer:
+        d3_additional.columns = d3_additional.columns.str.upper()
+        headers = ["HEADER NAME", "DESCRIPTION","UNIT", "RATE"]
+        d3_additional = d3_additional[headers]
+        with pd.ExcelWriter(output, engine='openpyxl', mode='a') as writer:
             d3_additional.to_excel(writer, sheet_name=f"SOR {i+1} Additionals", index=False)
         final = pd.concat(temp_acmv, ignore_index=True)
         #concat db if not first
@@ -271,10 +266,13 @@ def main():
         else: 
             database = pd.concat([database, final],axis=1)
     
-    with pd.ExcelWriter("output.xlsx", engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+    with pd.ExcelWriter(output, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
         database = reorder(database)
+        # Remove columns with names that start with 'Unnamed:'
         database.to_excel(writer, sheet_name="ACMV", index=False)
-        
+
+
+                
 def color_check_cells(file_path="output.xlsx"):
 
     wb = load_workbook(file_path)
@@ -283,15 +281,16 @@ def color_check_cells(file_path="output.xlsx"):
         # Remove the sheet called 'Sheet1'
         sheet_to_remove = wb['Sheet1']
         wb.remove(sheet_to_remove)
+
     sheet_names = wb.sheetnames
-    last_sheet = wb[sheet_names[-1]]  # Last sheet
+    last_sheet = wb[sheet_names[-1]] 
+    print(last_sheet) # Reordering sheets
     wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(last_sheet))) 
 
     if "ACMV" not in wb.sheetnames:
         print("ACMV sheet not found in workbook")
         return
     ws = wb["ACMV"]
-    
     # Identify all columns with headers containing "Check" (case-insensitive)
     check_columns = []
     for cell in ws[1]:
@@ -333,12 +332,38 @@ def color_check_cells(file_path="output.xlsx"):
                     ws.cell(row=row, column=c).fill = fill
                         
     wb.save(file_path)
-#############
+
+from datetime import datetime
+
+# Function to return today's date in dd/mmm/yy format
+def get_today_date():
+    return datetime.today().strftime('%d_%b_%y')
+date = get_today_date()
+
+def copy_sheet(input, output):
+    all_sheets = pd.read_excel(input, sheet_name=None)  # Returns a dict: {sheet_name: DataFrame}
+    def remove_unnamed(df):
+        return df.loc[:, ~df.columns.str.contains('^Unnamed', regex=True)]
+    # Try to open existing destination workbook
+    with pd.ExcelWriter(output, engine='openpyxl', mode='a', if_sheet_exists='new') as writer:
+        for sheet_name, df in all_sheets.items():
+            cleaned = remove_unnamed(df)
+            cleaned.to_excel(writer, sheet_name=sheet_name, index=False)
+
+
+input = 'acmv_final.xlsx'
+output = f"ACMV_{date}.xlsx"
+if __name__ == "__main__":
+    main(input, output)
+    color_check_cells(output)
+    copy_sheet(input, output)
+
 
 # Run the main process and then color cells as needed
 # main()
 # color_check_cells()
-if __name__ == "__main__":
-    main()
-    color_check_cells()
+# if __name__ == "__main__":
+#     main()
+#     color_check_cells()
+#     copy_sheet()
 
