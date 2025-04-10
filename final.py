@@ -350,12 +350,12 @@ def copy_sheet(input, output):
             cleaned = remove_unnamed(df)
             cleaned.to_excel(writer, sheet_name=sheet_name, index=False)
 
-
-input = 'acmv_final.xlsx'
-output = f"ACMV_{date}.xlsx"
-main(input, output)
-color_check_cells(output)
-copy_sheet(input, output)
+if __name__ == "__main__":
+    input = 'acmv_final.xlsx'
+    output = f"ACMV_{date}.xlsx"
+    main(input, output)
+    color_check_cells(output)
+    copy_sheet(input, output)
 
 
 # Run the main process and then color cells as needed
