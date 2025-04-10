@@ -353,10 +353,9 @@ def copy_sheet(input, output):
 
 input = 'acmv_final.xlsx'
 output = f"ACMV_{date}.xlsx"
-if __name__ == "__main__":
-    main(input, output)
-    color_check_cells(output)
-    copy_sheet(input, output)
+main(input, output)
+color_check_cells(output)
+copy_sheet(input, output)
 
 
 # Run the main process and then color cells as needed
