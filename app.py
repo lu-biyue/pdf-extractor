@@ -3,7 +3,7 @@ import pandas as pd
 from io import BytesIO
 from datetime import datetime
 import shutil
-from final import main, color_check_cells
+from final import main, color_check_cells, copy_sheet
 
 # Page configuration
 st.set_page_config(
@@ -61,6 +61,7 @@ if uploaded_file:
     try:
         main()
         color_check_cells()
+        copy_sheet()
         # st.success("✅ Excel comparison completed!")
         status_msg.success("✅ Excel comparison completed!")
 
