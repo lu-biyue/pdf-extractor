@@ -44,24 +44,30 @@ st.divider()
 # Upload Section
 uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "xls"])
 
-# if uploaded_file is not None:
-#     st.success("✅ File uploaded. Running comparison...")
-
 if uploaded_file:
     status_msg = st.empty()  # Create a placeholder for status updates
     status_msg.success("✅ File uploaded. Running comparison...")
-    
-    # Save file
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = f"{timestamp}_{uploaded_file.name}"
 
-    with open("acmv_final.xlsx", "wb") as f:
+    # Set output path
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    date = datetime.today().strftime('%d_%b_%y')
+    input_path = f"input_{timestamp}.xlsx"
+    output_path = f"ACMV_{date}.xlsx"
+
+    with open(input_path, "wb") as f:
         f.write(uploaded_file.read())
+    
+    # # Save file
+    # timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    # filename = f"{timestamp}_{uploaded_file.name}"
+
+    # with open("acmv_final.xlsx", "wb") as f:
+    #     f.write(uploaded_file.read())
 
     try:
-        main()
-        color_check_cells()
-        copy_sheet()
+        main(input_path, output_path)
+        color_check_cells(output_path)
+        copy_sheet(input_path, output_path)
         # st.success("✅ Excel comparison completed!")
         status_msg.success("✅ Excel comparison completed!")
 
@@ -69,11 +75,11 @@ if uploaded_file:
         df = pd.read_excel("output.xlsx", sheet_name="ACMV")
         st.dataframe(df, use_container_width=True)
 
-        with open("output.xlsx", "rb") as file:
+        with open("output_path.xlsx", "rb") as file:
             st.download_button(
                 label="📥 Download Result File",
                 data=file,
-                file_name="output.xlsx",
+                file_name="output_path",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
