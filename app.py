@@ -38,7 +38,7 @@ with st.expander("ℹ️ How to use this app"):
 with st.expander("📺 Watch a video tutorial here!"):
     st.markdown("Here’s a quick walkthrough video:")
     try:
-        video_bytes = open("demo.mov", "rb").read()  # or 'assets/demo.mov' if in a folder
+        video_bytes = open("demo.mp4", "rb").read() 
         st.video(video_bytes)
     except FileNotFoundError:
         st.error("❌ demo.mov not found in the repo.")
