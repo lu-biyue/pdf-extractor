@@ -26,7 +26,8 @@ A simple and efficient Streamlit app that allows users to compare rates across m
 ```bash
 pip install -r requirements.txt
 
-**### 3. Run the Streamlit app**
+### 3. Run the Streamlit app:
+
 streamlit run app.py
 
 
